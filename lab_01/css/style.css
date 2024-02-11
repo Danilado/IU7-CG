@@ -1,0 +1,90 @@
+* {
+  margin: 0;
+  padding: 0;
+  color: black;
+  font-family: "Courier New", Courier, monospace;
+}
+
+input {
+  width: 0;
+  border-radius: 0;
+  border: none;
+  background-color: #eee;
+  transition: 0.1s;
+  padding: 3px;
+}
+input:hover {
+  background-color: #bbb;
+}
+input:active {
+  background-color: #bbb;
+}
+input:focus {
+  background-color: #bbb;
+  border: none;
+}
+
+.row {
+  width: 20vw;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.row input {
+  margin: 3px 5px 0;
+}
+.row .texinput {
+  flex: 1;
+}
+.row .coordedit {
+  flex: 1;
+}
+.row .button {
+  flex: 0.15;
+  text-align: center;
+}
+.row .button:active {
+  background-color: #aaa;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+body .main {
+  display: flex;
+  flex-direction: row;
+  height: 80vh;
+}
+body .main .inputs {
+  width: 20vw;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  border-right: 1px black solid;
+  text-align: center;
+}
+body .main .inputs .verbal {
+  border-bottom: 1px solid black;
+  padding: 5px 0;
+}
+body .main .container {
+  width: 80vw;
+  height: 80vh;
+}
+body .main .container canvas {
+  width: 85vw;
+  height: 80vh;
+}
+body .footer {
+  display: flex;
+  height: 20vh;
+  width: 100vw;
+  border-top: 1px black solid;
+  overflow-y: scroll;
+}/*# sourceMappingURL=style.css.map */
