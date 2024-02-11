@@ -50,6 +50,14 @@ input {
     }
     text-align: center;
   }
+
+  .widebutton {
+    flex: 1;
+    &:active {
+      background-color: #aaa;
+    }
+    text-align: center;
+  }
 }
 
 body {
@@ -76,6 +84,7 @@ body {
       .verbal {
         border-bottom: 1px solid black;
         padding: 5px 0;
+        position: sticky;
       }
     }
 

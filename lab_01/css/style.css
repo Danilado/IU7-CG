@@ -47,6 +47,13 @@ input:focus {
 .row .button:active {
   background-color: #aaa;
 }
+.row .widebutton {
+  flex: 1;
+  text-align: center;
+}
+.row .widebutton:active {
+  background-color: #aaa;
+}
 
 body {
   height: 100vh;
@@ -72,6 +79,7 @@ body .main .inputs {
 body .main .inputs .verbal {
   border-bottom: 1px solid black;
   padding: 5px 0;
+  position: sticky;
 }
 body .main .container {
   width: 80vw;
