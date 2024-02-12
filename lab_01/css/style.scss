@@ -1,3 +1,6 @@
+$canvas_width: 80vw;
+$canvas_height: 80vh;
+
 * {
   margin: 0;
   padding: 0;
@@ -25,7 +28,7 @@ input {
 }
 
 .row {
-  width: 20vw;
+  width: calc(100vw - $canvas_width);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -70,10 +73,10 @@ body {
   .main {
     display: flex;
     flex-direction: row;
-    height: 80vh;
+    height: $canvas_height;
 
     .inputs {
-      width: 20vw;
+      width: calc(100vw - $canvas_width);
       display: flex;
       flex-direction: column;
       overflow-y: scroll;
@@ -89,18 +92,18 @@ body {
     }
 
     .container {
-      width: 80vw;
-      height: 80vh;
+      width: $canvas_width;
+      height: $canvas_height;
       canvas {
-        width: 85vw;
-        height: 80vh;
+        width: $canvas_width;
+        height: $canvas_height;
       }
     }
   }
 
   .footer {
     display: flex;
-    height: 20vh;
+    height: calc(100vh - $canvas_height);
     width: 100vw;
     border-top: 1px black solid;
     overflow-y: scroll;

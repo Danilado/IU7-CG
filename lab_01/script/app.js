@@ -1,5 +1,6 @@
 "use strict";
 const EPS = 1e-6;
+const DEBUG = false;
 //#region geometry
 class Point {
     constructor(x, y) {
@@ -30,9 +31,27 @@ class Line {
     constructor(p1, p2) {
         this.p1 = p1;
         this.p2 = p2;
+        this.k = (p2.y - p1.y) / (p2.x - p1.x);
+        this.c = p1.y - this.k * p1.x;
     }
     pointOnLine(p) {
         return pointsInLine(this.p1, this.p2, p);
+    }
+    getYbyX(x) {
+        if (!Number.isFinite(this.k))
+            return null;
+        return x * this.k + this.c;
+    }
+    getXbyY(y) {
+        if (!this.k)
+            return null;
+        return (y - this.c) / this.k;
+    }
+    isHorizontal() {
+        return !this.k;
+    }
+    isVertical() {
+        return !Number.isFinite(this.k);
     }
 }
 function pointsInLine(a, b, c) {
@@ -46,7 +65,7 @@ function angleBetween(p1, p2) {
     // то же самое, что arctan(dy/dx) между 2-мя точками
     return Math.atan2(p2.y - p1.y, p2.x - p1.x);
 }
-function minAngleBetween(p1, p2) {
+function minAbsAngleBetween(p1, p2) {
     let angle = angleBetween(p1, p2);
     if (angle < 0)
         return Math.abs(angle) < Math.abs(angle + Math.PI)
@@ -57,6 +76,8 @@ function minAngleBetween(p1, p2) {
 function PointsAngleWithX(p1, p2) {
     let angle = angleBetween(p1, p2);
     if (Math.abs(angle) < EPS)
+        return 0;
+    if (Math.abs(angle - Math.PI) < EPS)
         return 0;
     if (angle < 0)
         angle += Math.PI;
@@ -80,11 +101,11 @@ const input_center_x = document.querySelector("#ixcenter");
 const input_center_y = document.querySelector("#iycenter");
 const input_radius = document.querySelector("#iradius");
 const run_button = document.querySelector("#submit");
-//#region points
 const input_x = document.querySelector("#inewx");
 const input_y = document.querySelector("#inewy");
 const add_point = document.querySelector("#padd");
 const output_node = document.querySelector(".footer");
+//#region output
 class Output {
     constructor(node) {
         this.node = node;
@@ -94,10 +115,12 @@ class Output {
         this.scrollToBottom();
     }
     warn(text) {
-        this.write(text, "WARN: ");
+        if (DEBUG)
+            this.write(text, "WARN: ");
     }
     log(text) {
-        this.write(text, "LOG: ");
+        if (DEBUG)
+            this.write(text, "LOG: ");
     }
     error(text) {
         this.write(text, "ERROR: ");
@@ -107,6 +130,8 @@ class Output {
     }
 }
 const out = new Output(output_node);
+//#endregion
+//#region points
 class PointNode {
     constructor(pt) {
         this.index = -1;
@@ -227,15 +252,13 @@ add_point.addEventListener("click", () => {
         return out.error("Ошибка чтения значения Y новой точки");
     pts_element.add(new PointNode(new Point(x, y)));
 });
-//#endregion points
-//#endregion interface
-//#region logic
 class Logic {
     constructor() { }
-    findTrianglesIntersectingCircle(points, circ) {
-        if (points.length < 3) {
-            return out.error(`Недостаточно точек для построения даже одного треугольника`);
-        }
+    findTrianglesIntersectingCircleCenter(points, circ) {
+        if (points.length < 3)
+            return {
+                rc: 1,
+            };
         const triangles = [];
         for (let i = 0; i < points.length - 2; i++)
             for (let j = i + 1; j < points.length - 1; j++)
@@ -245,29 +268,38 @@ class Logic {
                     if (isTrianle(points[i].pt, points[j].pt, points[k].pt))
                         triangles.push([points[i], points[j], points[k]]);
                 }
-        if (!triangles.length) {
-            return out.error(`На этих точках не удалось построить ни одного треугольника`);
-        }
+        if (!triangles.length)
+            return {
+                rc: 2,
+            };
         const good_triangles = triangles.filter((tri) => {
-            return this.triangleSideIntersectsPoint(tri, circ.center);
+            return this.triangleSideLineIntersectsPoint(tri, circ.center);
         });
-        if (!good_triangles.length) {
-            return out.error(`Нe нашлось ни одного треугольника, прямая проходящая через вершину которого пересекала бы центр окружности`);
-        }
+        if (!good_triangles.length)
+            return {
+                rc: 3,
+            };
+        const angles = [];
         let min_angle = this.triangleAngleWithXThroughPoint(good_triangles[0], circ.center);
         let min_index = 0;
         good_triangles.forEach((tri, i) => {
             let angle = this.triangleAngleWithXThroughPoint(tri, circ.center);
+            angles.push(angle);
             if (angle < min_angle) {
                 min_angle = angle;
                 min_index = i;
             }
-            out.write(`Найден подходящий треугольник на точках ${tri[0].index + 1} ${tri[0].pt.toString()}; ${tri[1].index + 1} ${tri[1].pt.toString()}; ${tri[2].index + 1} ${tri[2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(toDeg(angle), 6)}град.`, "");
         });
-        let best = good_triangles[min_index];
-        out.write(`Треугольник с наименьшим углом к оси абсцисс: ${best[0].index + 1} ${best[0].pt.toString()}; ${best[1].index + 1} ${best[1].pt.toString()}; ${best[2].index + 1} ${best[2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(toDeg(min_angle), 6)}град.`, "");
+        return {
+            rc: 0,
+            data: {
+                triangles: good_triangles,
+                angles: angles,
+                bestIndex: min_index,
+            },
+        };
     }
-    triangleSideIntersectsPoint(tri, pt) {
+    triangleSideLineIntersectsPoint(tri, pt) {
         return (pointsInLine(tri[0].pt, tri[1].pt, pt) ||
             pointsInLine(tri[0].pt, tri[2].pt, pt) ||
             pointsInLine(tri[1].pt, tri[2].pt, pt));
@@ -288,6 +320,49 @@ class Logic {
         });
         return Math.min(PointsAngleWithX(intersecting.pt, tmppoints[0].pt), PointsAngleWithX(intersecting.pt, tmppoints[1].pt));
     }
+    getBoundaries(triangle, circ) {
+        let new_bound = {
+            x_min: 0,
+            x_max: 0,
+            y_min: 0,
+            y_max: 0,
+        };
+        new_bound.x_min = circ.center.x - circ.r;
+        new_bound.x_max = circ.center.x + circ.r;
+        new_bound.y_min = circ.center.y - circ.r;
+        new_bound.y_max = circ.center.y + circ.r;
+        triangle.forEach((pn) => {
+            new_bound.x_min = Math.min(new_bound.x_min, pn.pt.x);
+            new_bound.x_max = Math.max(new_bound.x_max, pn.pt.x);
+            new_bound.y_min = Math.min(new_bound.y_min, pn.pt.y);
+            new_bound.y_max = Math.max(new_bound.y_max, pn.pt.y);
+        });
+        let tmp_width = new_bound.x_max - new_bound.x_min;
+        let tmp_height = new_bound.y_max - new_bound.y_min;
+        new_bound.x_max += 0.1 * tmp_width;
+        new_bound.x_min -= 0.1 * tmp_width;
+        new_bound.y_max += 0.1 * tmp_height;
+        new_bound.y_min -= 0.1 * tmp_height;
+        return new_bound;
+    }
+    getIntersectingLine(tri, pt) {
+        for (let i = 0; i < 3; ++i)
+            if (pointsAreEqual(tri[i].pt, pt)) {
+                // если вершина в центре окружности
+                let tmppoints = tri.filter((pnode) => {
+                    return pnode !== tri[i];
+                });
+                return PointsAngleWithX(tri[i].pt, tmppoints[0].pt) <
+                    PointsAngleWithX(tri[i].pt, tmppoints[1].pt)
+                    ? new Line(tri[i].pt, tmppoints[0].pt)
+                    : new Line(tri[i].pt, tmppoints[1].pt);
+            }
+        if (pointsInLine(tri[0].pt, tri[1].pt, pt))
+            return new Line(tri[0].pt, tri[1].pt);
+        if (pointsInLine(tri[0].pt, tri[2].pt, pt))
+            return new Line(tri[0].pt, tri[2].pt);
+        return new Line(tri[1].pt, tri[2].pt);
+    }
 }
 const logic = new Logic();
 //#endregion
@@ -298,15 +373,17 @@ canvas.height = Math.round(canvas.getBoundingClientRect().height);
 const ctx = canvas.getContext("2d");
 class Graphics {
     constructor(context) {
-        this.width = canvas.width;
-        this.height = canvas.height;
+        this.canvas_width = canvas.width;
+        this.canvas_height = canvas.height;
         this.context = context;
+        this.width = this.canvas_width;
+        this.height = this.canvas_height;
         this.minx = 0;
         this.miny = 0;
         this.maxx = this.width;
         this.maxy = this.height;
         this.base = { x: 0, y: -this.maxy };
-        this.aspect_ratio = this.width / this.height;
+        this.aspect_ratio = this.canvas_width / this.canvas_height;
         this.scale = 1;
         this.context.textAlign = "center";
         // this.context.textBaseline = "middle";
@@ -317,34 +394,122 @@ class Graphics {
         this.context.strokeStyle = "black";
     }
     getCanvasCoords(pt) {
-        return new Point(this.base.x + (this.minx + pt.x) * this.scale, -(this.base.y + (this.miny + pt.y) * this.scale));
+        return new Point(this.base.x + (pt.x - this.minx) * this.scale, -(this.base.y + (pt.y - this.miny) * this.scale));
     }
     drawPoint(pt, text) {
+        if (this.minx > pt.x ||
+            this.maxx < pt.x ||
+            this.miny > pt.y ||
+            this.maxy < pt.y)
+            return null;
         let cpt = this.getCanvasCoords(pt);
-        // this.context.moveTo(cpt.x, cpt.y);
+        if (!cpt)
+            return;
         this.context.beginPath();
         this.context.arc(cpt.x, cpt.y, 3, 0, Math.PI * 2);
         this.context.fill();
         this.context.closePath();
-        // this.context.moveTo(cpt.x - 4, cpt.y - 8);
         this.context.beginPath();
         this.context.fillText(text, cpt.x, cpt.y - 10);
         this.context.closePath();
     }
     drawCircle(circ) {
         let cpt = this.getCanvasCoords(circ.center);
+        console.log(cpt);
         this.context.beginPath();
         this.context.arc(cpt.x, cpt.y, circ.r * this.scale, 0, Math.PI * 2);
         this.context.stroke();
         this.context.closePath();
         this.drawPoint(circ.center, `C: ${circ.center.toString()}`);
     }
+    drawTriangle(tri, color) {
+        let p1 = this.getCanvasCoords(tri.vertex1);
+        let p2 = this.getCanvasCoords(tri.vertex2);
+        let p3 = this.getCanvasCoords(tri.vertex3);
+        this.context.beginPath();
+        if (color)
+            this.context.strokeStyle = color;
+        this.context.moveTo(p1.x, p1.y);
+        this.context.lineTo(p2.x, p2.y);
+        this.context.lineTo(p3.x, p3.y);
+        this.context.lineTo(p1.x, p1.y);
+        this.context.stroke();
+        this.context.strokeStyle = "black";
+        this.context.closePath();
+    }
+    drawSegment(p1, p2, color) {
+        let ctx_p1 = this.getCanvasCoords(p1);
+        let ctx_p2 = this.getCanvasCoords(p2);
+        this.context.beginPath();
+        if (color)
+            this.context.strokeStyle = color;
+        this.context.moveTo(ctx_p1.x, ctx_p1.y);
+        this.context.lineTo(ctx_p2.x, ctx_p2.y);
+        this.context.stroke();
+        this.context.strokeStyle = "black";
+        this.context.closePath();
+    }
+    drawLine(l, color) {
+        let p1 = new Point(this.minx, 0);
+        let p2 = new Point(this.maxx, 0);
+        if (l.isHorizontal()) {
+            p1.y = l.p1.y;
+            p2.y = l.p1.y;
+        }
+        else if (l.isVertical()) {
+            p1.y = this.miny;
+            p2.y = this.maxy;
+            p1.x = l.p1.x;
+            p2.x = l.p1.x;
+        }
+        else {
+            p1.y = l.getYbyX(p1.x);
+            p2.y = l.getYbyX(p2.x);
+        }
+        this.drawSegment(p1, p2, color);
+    }
     endFrame() {
         this.context.beginPath();
         this.context.fillStyle = "white";
-        this.context.fillRect(0, 0, this.width, this.height);
+        this.context.fillRect(0, 0, this.canvas_width, this.canvas_height);
         this.context.fillStyle = "black";
         this.context.closePath();
+    }
+    setBoundaries(bounds) {
+        let xmin = bounds.x_min;
+        let xmax = bounds.x_max;
+        let ymin = bounds.y_min;
+        let ymax = bounds.y_max;
+        let new_w = xmax - xmin;
+        let new_h = ymax - ymin;
+        let tmp_ar = new_w / new_h;
+        if (tmp_ar < this.aspect_ratio) {
+            let x_scale = (new_h / new_w) * this.aspect_ratio;
+            let diff = new_w * x_scale - new_w;
+            xmax += diff / 2;
+            xmin -= diff / 2;
+            new_w = new_w * x_scale;
+        }
+        else {
+            let y_scale = new_w / new_h / this.aspect_ratio;
+            let diff = new_h * y_scale - new_h;
+            ymax += diff / 2;
+            ymin -= diff / 2;
+            new_h = new_h * y_scale;
+        }
+        console.log(this.canvas_width, new_w);
+        let newscale = this.canvas_width / new_w;
+        this.minx = xmin;
+        this.maxx = xmax;
+        this.miny = ymin;
+        this.maxy = ymax;
+        this.scale = newscale;
+        this.width = new_w;
+        this.height = new_h;
+        out.log("Меняю масштаб и пределы. Текущий масштаб: " +
+            `${toPrecision(this.scale, 2)} пикс. к 1 ед координат`);
+        out.log(`x: [${toPrecision(xmin, 2)}; ${toPrecision(xmax, 2)}]   ` +
+            `y: [${toPrecision(ymin, 2)}; ${toPrecision(ymax, 2)}]`);
     }
 }
 window.addEventListener("resize", () => {
@@ -364,10 +529,32 @@ run_button.addEventListener("click", () => {
     if (Number.isNaN(r) || !input_radius.value)
         return out.error("Ошибка чтения значения радиуса окружности");
     let circ = new Circle(new Point(x, y), r);
-    logic.findTrianglesIntersectingCircle(pts_element.pointarr, circ);
+    let ret = logic.findTrianglesIntersectingCircleCenter(pts_element.pointarr, circ);
+    if (ret.rc) {
+        if (ret.rc == 1)
+            return out.error(`Недостаточно точек для построения даже одного треугольника`);
+        if (ret.rc == 2)
+            return out.error(`На этих точках не удалось построить ни одного треугольника`);
+        if (ret.rc == 3)
+            return out.error("Нe нашлось ни одного треугольника, прямая проходящая через " +
+                "сторону которого пересекала бы центр окружности");
+    }
+    let triangles = ret.data.triangles;
+    let angles = ret.data.angles;
+    let bestIndex = ret.data.bestIndex;
+    for (let i = 0; i < triangles.length; ++i) {
+        out.write(`Найден подходящий треугольник на точках ${triangles[i][0].index + 1} ${triangles[i][0].pt.toString()}; ${triangles[i][1].index + 1} ${triangles[i][1].pt.toString()}; ${triangles[i][2].index + 1} ${triangles[i][2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(toDeg(angles[i]), 6)}град.`, "");
+    }
+    out.write(`Треугольник с наименьшим углом к оси абсцисс: ${triangles[bestIndex][0].index + 1} ${triangles[bestIndex][0].pt.toString()}; ${triangles[bestIndex][1].index + 1} ${triangles[bestIndex][1].pt.toString()}; ${triangles[bestIndex][2].index + 1} ${triangles[bestIndex][2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(toDeg(angles[bestIndex]), 6)}град.`, "");
+    let bounds = logic.getBoundaries(triangles[bestIndex], circ);
+    graphics.setBoundaries(bounds);
     graphics.endFrame();
     graphics.drawCircle(circ);
     pts_element.pointarr.forEach((pn) => {
         graphics.drawPoint(pn.pt, pn.toString());
     });
+    let tri = new Triangle(triangles[bestIndex][0].pt, triangles[bestIndex][1].pt, triangles[bestIndex][2].pt);
+    graphics.drawTriangle(tri, "blue");
+    let l = logic.getIntersectingLine(triangles[bestIndex], circ.center);
+    graphics.drawLine(l, "red");
 });
