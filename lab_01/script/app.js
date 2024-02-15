@@ -1,6 +1,9 @@
 "use strict";
-const EPS = 1e-6;
+const EPS = 1e-10;
 const DEBUG = false;
+let dark = false;
+let STROKE_COLOR = "#222222";
+let STROKE_COLOR_DARK = "#aaaaaa";
 //#region geometry
 class Point {
     constructor(x, y) {
@@ -75,12 +78,11 @@ function minAbsAngleBetween(p1, p2) {
 }
 function PointsAngleWithX(p1, p2) {
     let angle = angleBetween(p1, p2);
-    if (Math.abs(angle) < EPS)
+    angle = Math.abs(angle);
+    if (angle >= Math.PI / 2 - EPS)
+        angle = Math.PI - angle;
+    if (angle < EPS)
         return 0;
-    if (Math.abs(angle - Math.PI) < EPS)
-        return 0;
-    if (angle < 0)
-        angle += Math.PI;
     return angle;
 }
 function LineAngleWithX(l) {
@@ -104,15 +106,21 @@ const run_button = document.querySelector("#submit");
 const input_x = document.querySelector("#inewx");
 const input_y = document.querySelector("#inewy");
 const add_point = document.querySelector("#padd");
-const output_node = document.querySelector(".footer");
+const clear_points = document.querySelector("#clearall");
+const clear_output = document.querySelector("#clearout");
+const output_node = document.querySelector(".footertext");
+const change_theme = document.querySelector("#themechange");
 //#region output
 class Output {
     constructor(node) {
         this.node = node;
     }
     write(text, prefix) {
-        this.node.innerHTML += prefix + text + "<br><br>";
+        this.node.innerHTML += prefix + text.replace(/\n/, "<br />") + "<br />";
         this.scrollToBottom();
+    }
+    clear() {
+        this.node.innerHTML = ``;
     }
     warn(text) {
         if (DEBUG)
@@ -130,6 +138,9 @@ class Output {
     }
 }
 const out = new Output(output_node);
+clear_output.addEventListener("click", () => {
+    out.clear();
+});
 //#endregion
 //#region points
 class PointNode {
@@ -138,6 +149,9 @@ class PointNode {
         this.pt = pt;
         this.node = document.createElement("div");
         this.indexnode = document.createElement("input");
+        this.indexnode.disabled = true;
+        if (dark)
+            this.indexnode.classList.add("dark");
         this.deletebutton = document.createElement("input");
         this.coords = [];
         this.index = -1;
@@ -150,10 +164,16 @@ class PointNode {
         this.addCoordListeners();
     }
     form() {
+        if (dark) {
+            this.node.classList.add("dark");
+            this.deletebutton.classList.add("dark");
+        }
         this.node.appendChild(this.indexnode);
         this.coords.forEach((coord) => {
             coord.type = "text";
             coord.classList.add("coordedit");
+            if (dark)
+                coord.classList.add("dark");
             this.node.appendChild(coord);
         });
         this.node.appendChild(this.deletebutton);
@@ -237,6 +257,13 @@ class PointTable {
             this.node.appendChild(pn.node);
         });
     }
+    clear() {
+        this.pointarr.forEach((pn) => {
+            this.node.removeChild(pn.node);
+        });
+        this.pointarr = [];
+        this.update();
+    }
 }
 const pts_element = new PointTable(".points");
 add_point.addEventListener("click", () => {
@@ -252,6 +279,24 @@ add_point.addEventListener("click", () => {
         return out.error("Ошибка чтения значения Y новой точки");
     pts_element.add(new PointNode(new Point(x, y)));
 });
+clear_points.addEventListener("click", () => {
+    pts_element.clear();
+});
+//#endregion points
+change_theme.addEventListener("click", () => {
+    dark = !dark;
+    let everything = document.querySelectorAll("*");
+    if (dark)
+        for (let node of everything) {
+            node.classList.add("dark");
+        }
+    else
+        for (let node of everything) {
+            node.classList.remove("dark");
+        }
+    graphics.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+    graphics.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+});
 class Logic {
     constructor() { }
     findTrianglesIntersectingCircleCenter(points, circ) {
@@ -263,8 +308,6 @@ class Logic {
         for (let i = 0; i < points.length - 2; i++)
             for (let j = i + 1; j < points.length - 1; j++)
                 for (let k = j + 1; k < points.length; k++) {
-                    if (i == j || i == k || j == k)
-                        continue;
                     if (isTrianle(points[i].pt, points[j].pt, points[k].pt))
                         triangles.push([points[i], points[j], points[k]]);
                 }
@@ -390,8 +433,8 @@ class Graphics {
         this.context.font = "16px serif";
         this.context.beginPath();
         this.context.lineWidth = 1;
-        this.context.fillStyle = "black";
-        this.context.strokeStyle = "black";
+        this.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+        this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
     }
     getCanvasCoords(pt) {
         return new Point(this.base.x + (pt.x - this.minx) * this.scale, -(this.base.y + (pt.y - this.miny) * this.scale));
@@ -434,7 +477,7 @@ class Graphics {
         this.context.lineTo(p3.x, p3.y);
         this.context.lineTo(p1.x, p1.y);
         this.context.stroke();
-        this.context.strokeStyle = "black";
+        this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
         this.context.closePath();
     }
     drawSegment(p1, p2, color) {
@@ -446,7 +489,7 @@ class Graphics {
         this.context.moveTo(ctx_p1.x, ctx_p1.y);
         this.context.lineTo(ctx_p2.x, ctx_p2.y);
         this.context.stroke();
-        this.context.strokeStyle = "black";
+        this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
         this.context.closePath();
     }
     drawLine(l, color) {
@@ -469,11 +512,7 @@ class Graphics {
         this.drawSegment(p1, p2, color);
     }
     endFrame() {
-        this.context.beginPath();
-        this.context.fillStyle = "white";
-        this.context.fillRect(0, 0, this.canvas_width, this.canvas_height);
-        this.context.fillStyle = "black";
-        this.context.closePath();
+        this.context.clearRect(0, 0, this.canvas_width, this.canvas_height);
     }
     setBoundaries(bounds) {
         let xmin = bounds.x_min;
@@ -497,7 +536,6 @@ class Graphics {
             ymin -= diff / 2;
             new_h = new_h * y_scale;
         }
-        console.log(this.canvas_width, new_w);
         let newscale = this.canvas_width / new_w;
         this.minx = xmin;
         this.maxx = xmax;
@@ -510,6 +548,10 @@ class Graphics {
             `${toPrecision(this.scale, 2)} пикс. к 1 ед координат`);
         out.log(`x: [${toPrecision(xmin, 2)}; ${toPrecision(xmax, 2)}]   ` +
             `y: [${toPrecision(ymin, 2)}; ${toPrecision(ymax, 2)}]`);
+    }
+    updateStrokeColor() {
+        this.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+        this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
     }
 }
 window.addEventListener("resize", () => {
@@ -542,19 +584,30 @@ run_button.addEventListener("click", () => {
     let triangles = ret.data.triangles;
     let angles = ret.data.angles;
     let bestIndex = ret.data.bestIndex;
+    let bestTriangle = triangles[bestIndex];
+    out.write(`ОТВЕТ:\nНайденные треугольники:\n`, "");
     for (let i = 0; i < triangles.length; ++i) {
-        out.write(`Найден подходящий треугольник на точках ${triangles[i][0].index + 1} ${triangles[i][0].pt.toString()}; ${triangles[i][1].index + 1} ${triangles[i][1].pt.toString()}; ${triangles[i][2].index + 1} ${triangles[i][2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(toDeg(angles[i]), 6)}град.`, "");
+        out.write(`${i + 1}: треугольник на точках ${triangles[i][0].index + 1} ` +
+            `${triangles[i][0].pt.toString()}; ` +
+            `${triangles[i][1].index + 1} ${triangles[i][1].pt.toString()}; ` +
+            `${triangles[i][2].index + 1} ${triangles[i][2].pt.toString()}, ` +
+            `угол с осью Абсцисс: ${toPrecision(toDeg(angles[i]), 6)}град.`, "");
     }
-    out.write(`Треугольник с наименьшим углом к оси абсцисс: ${triangles[bestIndex][0].index + 1} ${triangles[bestIndex][0].pt.toString()}; ${triangles[bestIndex][1].index + 1} ${triangles[bestIndex][1].pt.toString()}; ${triangles[bestIndex][2].index + 1} ${triangles[bestIndex][2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(toDeg(angles[bestIndex]), 6)}град.`, "");
-    let bounds = logic.getBoundaries(triangles[bestIndex], circ);
+    out.write(`Треугольник с наименьшим углом к оси абсцисс:\n` +
+        `${bestIndex + 1}: ` +
+        `${bestTriangle[0].index + 1} ${bestTriangle[0].pt.toString()}; ` +
+        `${bestTriangle[1].index + 1} ${bestTriangle[1].pt.toString()}; ` +
+        `${bestTriangle[2].index + 1} ${bestTriangle[2].pt.toString()}, ` +
+        `угол с осью Абсцисс: ${toPrecision(toDeg(angles[bestIndex]), 6)}град.`, "");
+    let bounds = logic.getBoundaries(bestTriangle, circ);
     graphics.setBoundaries(bounds);
     graphics.endFrame();
     graphics.drawCircle(circ);
+    let tri = new Triangle(bestTriangle[0].pt, bestTriangle[1].pt, bestTriangle[2].pt);
+    graphics.drawTriangle(tri, "blue");
+    let l = logic.getIntersectingLine(bestTriangle, circ.center);
+    graphics.drawLine(l, "red");
     pts_element.pointarr.forEach((pn) => {
         graphics.drawPoint(pn.pt, pn.toString());
     });
-    let tri = new Triangle(triangles[bestIndex][0].pt, triangles[bestIndex][1].pt, triangles[bestIndex][2].pt);
-    graphics.drawTriangle(tri, "blue");
-    let l = logic.getIntersectingLine(triangles[bestIndex], circ.center);
-    graphics.drawLine(l, "red");
 });

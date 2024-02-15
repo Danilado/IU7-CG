@@ -1,29 +1,69 @@
 $canvas_width: 80vw;
 $canvas_height: 80vh;
 
+$background: #fff;
+$background-dark: #333;
+
+$font-color: #000;
+$font-color-dark: #fff;
+
+$input-background: #eee;
+$input-background-dark: #999;
+
+$input-background-hover: #bbb;
+$input-background-hover-dark: #777;
+
+$input-background-active: #bbb;
+$input-background-active-dark: #777;
+
+$input-background-click: #aaa;
+$input-background-click-dark: #aaa;
+
 * {
   margin: 0;
   padding: 0;
-  color: black;
   font-family: "Courier New", Courier, monospace;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  background: $background;
+  color: $font-color;
+
+  transition: 0.3s;
+
+  &.dark {
+    background: $background-dark;
+    color: $font-color-dark;
+  }
 }
 
 input {
   width: 0;
   border-radius: 0;
   border: none;
-  background-color: #eee;
+  background-color: $input-background;
   transition: 0.1s;
   padding: 3px;
+
   &:hover {
-    background-color: #bbb;
+    background-color: $input-background-hover;
   }
-  &:active {
-    background-color: #bbb;
-  }
+  &:active,
   &:focus {
-    background-color: #bbb;
-    border: none;
+    background-color: $input-background-active;
+  }
+
+  &.dark {
+    background-color: $input-background-dark;
+    &:hover {
+      background-color: $input-background-hover-dark;
+    }
+    &:active,
+    &:focus {
+      background-color: $input-background-active-dark;
+    }
   }
 }
 
@@ -49,7 +89,12 @@ input {
   .button {
     flex: 0.15;
     &:active {
-      background-color: #aaa;
+      background-color: $input-background-click;
+    }
+    &.dark {
+      &:active {
+        background-color: $input-background-click-dark;
+      }
     }
     text-align: center;
   }
@@ -57,7 +102,12 @@ input {
   .widebutton {
     flex: 1;
     &:active {
-      background-color: #aaa;
+      background-color: $input-background-click;
+    }
+    &.dark {
+      &:active {
+        background-color: $input-background-click-dark;
+      }
     }
     text-align: center;
   }
@@ -77,17 +127,42 @@ body {
 
     .inputs {
       width: calc(100vw - $canvas_width);
+      min-height: $canvas_height;
       display: flex;
       flex-direction: column;
-      overflow-y: scroll;
       overflow-x: hidden;
-      border-right: 1px black solid;
+      border-right: 1px $font-color solid;
       text-align: center;
 
+      &.dark {
+        border-right: 1px $font-color-dark solid;
+      }
+
       .verbal {
-        border-bottom: 1px solid black;
+        border-bottom: 1px solid $font-color;
         padding: 5px 0;
         position: sticky;
+
+        &.dark {
+          border-bottom: 1px solid $font-color-dark;
+        }
+
+        &.bottom {
+          border-top: 1px solid $font-color;
+          border-bottom: none;
+
+          &.dark {
+            border-top: 1px solid $font-color-dark;
+          }
+
+          &:first-child {
+            margin-top: auto;
+          }
+        }
+      }
+
+      .points {
+        overflow-y: scroll;
       }
     }
 
@@ -105,7 +180,51 @@ body {
     display: flex;
     height: calc(100vh - $canvas_height);
     width: 100vw;
-    border-top: 1px black solid;
-    overflow-y: scroll;
+    border-top: 1px $font-color solid;
+    &.dark {
+      border-top: 1px $font-color-dark solid;
+    }
+
+    .footertext {
+      width: 100%;
+      height: 100%;
+      overflow-y: scroll;
+    }
+
+    .clearout,
+    .themechange {
+      position: fixed;
+      right: 5px;
+      bottom: 5px;
+      width: 100px;
+      padding: 5px;
+      text-align: center;
+      background-color: $input-background;
+
+      &.dark {
+        background-color: $input-background-dark;
+      }
+
+      &:hover {
+        background-color: $input-background-hover;
+      }
+      &:active {
+        background-color: $input-background-click;
+      }
+
+      &.dark {
+        &:hover {
+          background-color: $input-background-hover-dark;
+        }
+
+        &:active {
+          background-color: $input-background-click-dark;
+        }
+      }
+    }
+
+    .themechange {
+      bottom: calc(10px + 2em);
+    }
   }
 }

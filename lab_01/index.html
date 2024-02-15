@@ -64,12 +64,46 @@
           </div>
         </div>
         <div class="points"></div>
+        <div class="verbal bottom" style="margin-top: auto">
+          <div class="row">
+            <input
+              type="button"
+              value="Удалить все точки"
+              id="clearall"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <div class="verbal bottom">
+          УСЛОВИЕ<br />
+          Дано: Множество точек на плоскости, Окружность (координаты центра и
+          радиус) <br />
+          Найти: Все такие треугольники с вершинами в точках из множества, для
+          которых прямая, проходящая через две вершины треугольника проходит и
+          через центр окружности <br />
+          Среди найденных треугольников выбрать тот, у которого искомая сторона
+          образует минимальный угол с осью абсцисс
+        </div>
       </div>
       <div class="container">
         <canvas></canvas>
       </div>
     </div>
-    <div class="footer"></div>
+    <div class="footer">
+      <input
+        type="button"
+        value="очистить"
+        id="clearout"
+        class="button clearout"
+      />
+      <input
+        type="button"
+        value="смена темы"
+        id="themechange"
+        class="button themechange"
+      />
+      <div class="footertext"></div>
+    </div>
     <script src="./script/app.js"></script>
   </body>
 </html>

@@ -1,7 +1,10 @@
 "use strict";
 
-const EPS = 1e-6;
+const EPS = 1e-10;
 const DEBUG = false;
+let dark = false;
+let STROKE_COLOR = "#222222";
+let STROKE_COLOR_DARK = "#aaaaaa";
 
 //#region geometry
 
@@ -106,9 +109,13 @@ function minAbsAngleBetween(p1: Point, p2: Point) {
 
 function PointsAngleWithX(p1: Point, p2: Point) {
   let angle = angleBetween(p1, p2);
-  if (Math.abs(angle) < EPS) return 0;
-  if (Math.abs(angle - Math.PI) < EPS) return 0;
-  if (angle < 0) angle += Math.PI;
+
+  angle = Math.abs(angle);
+
+  if (angle >= Math.PI / 2 - EPS) angle = Math.PI - angle;
+
+  if (angle < EPS) return 0;
+
   return angle;
 }
 
@@ -141,7 +148,11 @@ const run_button: HTMLInputElement = document.querySelector("#submit")!;
 const input_x: HTMLInputElement = document.querySelector("#inewx")!;
 const input_y: HTMLInputElement = document.querySelector("#inewy")!;
 const add_point: HTMLInputElement = document.querySelector("#padd")!;
-const output_node: HTMLDivElement = document.querySelector(".footer")!;
+const clear_points: HTMLInputElement = document.querySelector("#clearall")!;
+const clear_output: HTMLInputElement = document.querySelector("#clearout")!;
+const output_node: HTMLDivElement = document.querySelector(".footertext")!;
+
+const change_theme: HTMLInputElement = document.querySelector("#themechange")!;
 
 //#region output
 class Output {
@@ -151,8 +162,12 @@ class Output {
   }
 
   write(text: string, prefix: string) {
-    this.node.innerHTML += prefix + text + "<br><br>";
+    this.node.innerHTML += prefix + text.replace(/\n/, "<br />") + "<br />";
     this.scrollToBottom();
+  }
+
+  clear() {
+    this.node.innerHTML = ``;
   }
 
   warn(text: string) {
@@ -174,6 +189,10 @@ class Output {
 
 const out: Output = new Output(output_node);
 
+clear_output.addEventListener("click", () => {
+  out.clear();
+});
+
 //#endregion
 
 //#region points
@@ -190,6 +209,8 @@ class PointNode {
 
     this.node = document.createElement("div");
     this.indexnode = document.createElement("input");
+    this.indexnode.disabled = true;
+    if (dark) this.indexnode.classList.add("dark");
     this.deletebutton = document.createElement("input");
     this.coords = [];
     this.index = -1;
@@ -205,11 +226,17 @@ class PointNode {
   }
 
   form() {
+    if (dark) {
+      this.node.classList.add("dark");
+      this.deletebutton.classList.add("dark");
+    }
+
     this.node.appendChild(this.indexnode);
 
     this.coords.forEach((coord) => {
       coord.type = "text";
       coord.classList.add("coordedit");
+      if (dark) coord.classList.add("dark");
       this.node.appendChild(coord);
     });
 
@@ -316,6 +343,15 @@ class PointTable {
       this.node.appendChild(pn.node);
     });
   }
+
+  clear() {
+    this.pointarr.forEach((pn: PointNode) => {
+      this.node.removeChild(pn.node);
+    });
+
+    this.pointarr = [];
+    this.update();
+  }
 }
 
 const pts_element: PointTable = new PointTable(".points");
@@ -338,7 +374,27 @@ add_point.addEventListener("click", () => {
   pts_element.add(new PointNode(new Point(x, y)));
 });
 
+clear_points.addEventListener("click", () => {
+  pts_element.clear();
+});
+
 //#endregion points
+
+change_theme.addEventListener("click", () => {
+  dark = !dark;
+  let everything = document.querySelectorAll("*");
+  if (dark)
+    for (let node of everything) {
+      node.classList.add("dark");
+    }
+  else
+    for (let node of everything) {
+      node.classList.remove("dark");
+    }
+
+  graphics.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+  graphics.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+});
 
 //#endregion interface
 
@@ -379,7 +435,6 @@ class Logic {
     for (let i = 0; i < points.length - 2; i++)
       for (let j = i + 1; j < points.length - 1; j++)
         for (let k = j + 1; k < points.length; k++) {
-          if (i == j || i == k || j == k) continue;
           if (isTrianle(points[i].pt, points[j].pt, points[k].pt))
             triangles.push([points[i], points[j], points[k]]);
         }
@@ -570,8 +625,8 @@ class Graphics {
 
     this.context.beginPath();
     this.context.lineWidth = 1;
-    this.context.fillStyle = "black";
-    this.context.strokeStyle = "black";
+    this.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+    this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
   }
 
   getCanvasCoords(pt: Point) {
@@ -628,7 +683,7 @@ class Graphics {
 
     this.context.stroke();
 
-    this.context.strokeStyle = "black";
+    this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
     this.context.closePath();
   }
 
@@ -644,7 +699,7 @@ class Graphics {
 
     this.context.stroke();
 
-    this.context.strokeStyle = "black";
+    this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
     this.context.closePath();
   }
 
@@ -670,11 +725,7 @@ class Graphics {
   }
 
   endFrame() {
-    this.context.beginPath();
-    this.context.fillStyle = "white";
-    this.context.fillRect(0, 0, this.canvas_width, this.canvas_height);
-    this.context.fillStyle = "black";
-    this.context.closePath();
+    this.context.clearRect(0, 0, this.canvas_width, this.canvas_height);
   }
 
   setBoundaries(bounds: Boundaries) {
@@ -702,7 +753,6 @@ class Graphics {
       new_h = new_h * y_scale;
     }
 
-    console.log(this.canvas_width, new_w);
     let newscale = this.canvas_width / new_w;
 
     this.minx = xmin;
@@ -721,6 +771,11 @@ class Graphics {
       `x: [${toPrecision(xmin, 2)}; ${toPrecision(xmax, 2)}]   ` +
         `y: [${toPrecision(ymin, 2)}; ${toPrecision(ymax, 2)}]`
     );
+  }
+
+  updateStrokeColor() {
+    this.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
+    this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
   }
 }
 
@@ -778,59 +833,51 @@ run_button.addEventListener("click", () => {
   let triangles = ret.data!.triangles;
   let angles = ret.data!.angles;
   let bestIndex = ret.data!.bestIndex;
+  let bestTriangle = triangles[bestIndex];
+
+  out.write(`ОТВЕТ:\nНайденные треугольники:\n`, "");
 
   for (let i = 0; i < triangles!.length; ++i) {
     out.write(
-      `Найден подходящий треугольник на точках ${
-        triangles[i][0].index + 1
-      } ${triangles[i][0].pt.toString()}; ${
-        triangles[i][1].index + 1
-      } ${triangles[i][1].pt.toString()}; ${
-        triangles[i][2].index + 1
-      } ${triangles[i][2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(
-        toDeg(angles[i]),
-        6
-      )}град.`,
+      `${i + 1}: треугольник на точках ${triangles[i][0].index + 1} ` +
+        `${triangles[i][0].pt.toString()}; ` +
+        `${triangles[i][1].index + 1} ${triangles[i][1].pt.toString()}; ` +
+        `${triangles[i][2].index + 1} ${triangles[i][2].pt.toString()}, ` +
+        `угол с осью Абсцисс: ${toPrecision(toDeg(angles[i]), 6)}град.`,
       ""
     );
   }
 
   out.write(
-    `Треугольник с наименьшим углом к оси абсцисс: ${
-      triangles[bestIndex][0].index + 1
-    } ${triangles[bestIndex][0].pt.toString()}; ${
-      triangles[bestIndex][1].index + 1
-    } ${triangles[bestIndex][1].pt.toString()}; ${
-      triangles[bestIndex][2].index + 1
-    } ${triangles[
-      bestIndex
-    ][2].pt.toString()}, угол с осью Абсцисс: ${toPrecision(
-      toDeg(angles[bestIndex]),
-      6
-    )}град.`,
+    `Треугольник с наименьшим углом к оси абсцисс:\n` +
+      `${bestIndex + 1}: ` +
+      `${bestTriangle[0].index + 1} ${bestTriangle[0].pt.toString()}; ` +
+      `${bestTriangle[1].index + 1} ${bestTriangle[1].pt.toString()}; ` +
+      `${bestTriangle[2].index + 1} ${bestTriangle[2].pt.toString()}, ` +
+      `угол с осью Абсцисс: ${toPrecision(toDeg(angles[bestIndex]), 6)}град.`,
     ""
   );
 
-  let bounds: Boundaries = logic.getBoundaries(triangles[bestIndex], circ);
+  let bounds: Boundaries = logic.getBoundaries(bestTriangle, circ);
   graphics.setBoundaries(bounds);
 
   graphics.endFrame();
 
   graphics.drawCircle(circ);
 
-  pts_element.pointarr.forEach((pn) => {
-    graphics.drawPoint(pn.pt, pn.toString());
-  });
-
   let tri = new Triangle(
-    triangles[bestIndex][0].pt,
-    triangles[bestIndex][1].pt,
-    triangles[bestIndex][2].pt
+    bestTriangle[0].pt,
+    bestTriangle[1].pt,
+    bestTriangle[2].pt
   );
 
   graphics.drawTriangle(tri, "blue");
 
-  let l: Line = logic.getIntersectingLine(triangles[bestIndex], circ.center);
+  let l: Line = logic.getIntersectingLine(bestTriangle, circ.center);
 
   graphics.drawLine(l, "red");
+
+  pts_element.pointarr.forEach((pn) => {
+    graphics.drawPoint(pn.pt, pn.toString());
+  });
 });
