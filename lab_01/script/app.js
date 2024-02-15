@@ -140,6 +140,7 @@ class Output {
 const out = new Output(output_node);
 clear_output.addEventListener("click", () => {
     out.clear();
+    graphics.endFrame();
 });
 //#endregion
 //#region points
@@ -185,6 +186,7 @@ class PointNode {
     }
     addCoordListeners() {
         this.coords[0].addEventListener("input", () => {
+            graphics.endFrame();
             let tmp = Number(this.coords[0].value);
             if (Number.isNaN(tmp) || !this.coords[0].value)
                 return out.error(`Ошибка изменения координаты X точки ${this.index + 1}`);
@@ -192,6 +194,7 @@ class PointNode {
             out.log(`Координата X точки ${this.index + 1} изменена на ${tmp}`);
         });
         this.coords[1].addEventListener("input", () => {
+            graphics.endFrame();
             let tmp = Number(this.coords[1].value);
             if (Number.isNaN(tmp) || !this.coords[1].value)
                 return out.error(`Ошибка изменения координаты Y точки ${this.index + 1}`);
@@ -201,6 +204,7 @@ class PointNode {
     }
     addDelCallback(func) {
         this.deletebutton.addEventListener("click", () => {
+            graphics.endFrame();
             func();
         });
     }
@@ -240,6 +244,7 @@ class PointTable {
         this.update();
     }
     remove(pn) {
+        graphics.endFrame();
         out.log(`Удаляю точку ${pn.index + 1}`);
         this.node.removeChild(pn.node);
         this.pointarr = this.pointarr.filter((element) => {
@@ -258,6 +263,7 @@ class PointTable {
         });
     }
     clear() {
+        graphics.endFrame();
         this.pointarr.forEach((pn) => {
             this.node.removeChild(pn.node);
         });
@@ -267,6 +273,7 @@ class PointTable {
 }
 const pts_element = new PointTable(".points");
 add_point.addEventListener("click", () => {
+    graphics.endFrame();
     let x_in = input_x.value;
     let y_in = input_y.value;
     let x;
@@ -280,6 +287,7 @@ add_point.addEventListener("click", () => {
     pts_element.add(new PointNode(new Point(x, y)));
 });
 clear_points.addEventListener("click", () => {
+    graphics.endFrame();
     pts_element.clear();
 });
 //#endregion points
@@ -561,6 +569,7 @@ const graphics = new Graphics(ctx);
 // graphics.drawPoint(new Point(100, 550), "pepega");
 //#endregion graphics
 run_button.addEventListener("click", () => {
+    graphics.endFrame();
     let x = Number(input_center_x.value);
     if (Number.isNaN(x) || !input_center_x.value)
         return out.error("Ошибка чтения значения координаты x центра окружности");
@@ -601,7 +610,6 @@ run_button.addEventListener("click", () => {
         `угол с осью Абсцисс: ${toPrecision(toDeg(angles[bestIndex]), 6)}град.`, "");
     let bounds = logic.getBoundaries(bestTriangle, circ);
     graphics.setBoundaries(bounds);
-    graphics.endFrame();
     graphics.drawCircle(circ);
     let tri = new Triangle(bestTriangle[0].pt, bestTriangle[1].pt, bestTriangle[2].pt);
     graphics.drawTriangle(tri, "blue");

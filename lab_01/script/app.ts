@@ -191,6 +191,7 @@ const out: Output = new Output(output_node);
 
 clear_output.addEventListener("click", () => {
   out.clear();
+  graphics.endFrame();
 });
 
 //#endregion
@@ -251,6 +252,8 @@ class PointNode {
 
   addCoordListeners() {
     this.coords[0].addEventListener("input", () => {
+      graphics.endFrame();
+
       let tmp = Number(this.coords[0].value);
       if (Number.isNaN(tmp) || !this.coords[0].value)
         return out.error(
@@ -262,6 +265,8 @@ class PointNode {
     });
 
     this.coords[1].addEventListener("input", () => {
+      graphics.endFrame();
+
       let tmp = Number(this.coords[1].value);
       if (Number.isNaN(tmp) || !this.coords[1].value)
         return out.error(
@@ -275,6 +280,8 @@ class PointNode {
 
   addDelCallback(func: Function) {
     this.deletebutton.addEventListener("click", () => {
+      graphics.endFrame();
+
       func();
     });
   }
@@ -325,6 +332,8 @@ class PointTable {
   }
 
   remove(pn: PointNode) {
+    graphics.endFrame();
+
     out.log(`Удаляю точку ${pn.index + 1}`);
     this.node.removeChild(pn.node);
     this.pointarr = this.pointarr.filter((element: PointNode) => {
@@ -345,6 +354,8 @@ class PointTable {
   }
 
   clear() {
+    graphics.endFrame();
+
     this.pointarr.forEach((pn: PointNode) => {
       this.node.removeChild(pn.node);
     });
@@ -357,6 +368,8 @@ class PointTable {
 const pts_element: PointTable = new PointTable(".points");
 
 add_point.addEventListener("click", () => {
+  graphics.endFrame();
+
   let x_in = input_x.value;
   let y_in = input_y.value;
 
@@ -375,6 +388,8 @@ add_point.addEventListener("click", () => {
 });
 
 clear_points.addEventListener("click", () => {
+  graphics.endFrame();
+
   pts_element.clear();
 });
 
@@ -794,6 +809,8 @@ const graphics = new Graphics(ctx);
 //#endregion graphics
 
 run_button.addEventListener("click", () => {
+  graphics.endFrame();
+
   let x: number = Number(input_center_x.value);
   if (Number.isNaN(x) || !input_center_x.value)
     return out.error("Ошибка чтения значения координаты x центра окружности");
@@ -860,8 +877,6 @@ run_button.addEventListener("click", () => {
 
   let bounds: Boundaries = logic.getBoundaries(bestTriangle, circ);
   graphics.setBoundaries(bounds);
-
-  graphics.endFrame();
 
   graphics.drawCircle(circ);
 
