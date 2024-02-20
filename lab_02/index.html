@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <title>ЛР1</title>
+  </head>
+  <body>
+    <div class="main">
+      <div class="inputs">
+        <div class="verbal">
+          <div class="row">
+            <input
+              type="button"
+              value="Рассчитать"
+              id="submit"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <!--rotate-->
+        <div class="verbal">
+          <div>Трансформация - поворот</div>
+          <div class="row">
+            <input
+              type="text"
+              class="texinput"
+              placeholder="x центра"
+              id="ixcenter"
+            />
+            <input
+              type="text"
+              class="texinput"
+              placeholder="y центра"
+              id="iycenter"
+            />
+            <input
+              type="text"
+              class="texinput"
+              placeholder="угол в градусах"
+              id="iradius"
+            />
+          </div>
+          <div class="row">
+            <input type="button" value="применить" class="widebutton" />
+          </div>
+        </div>
+        <!--shift-->
+
+        <!--scale-->
+      </div>
+      <div class="container">
+        <canvas id="dynamicPlane" style="z-index: 10"></canvas>
+        <canvas id="staticPlane"></canvas>
+        <canvas id="tmp"></canvas>
+      </div>
+    </div>
+    <div class="footer">
+      <input
+        type="button"
+        value="очистить"
+        id="clearout"
+        class="button clearout"
+      />
+      <input
+        type="button"
+        value="смена темы"
+        id="themechange"
+        class="button themechange"
+      />
+      <div class="footertext"></div>
+    </div>
+    <script src="./script/app.js"></script>
+  </body>
+</html>
