@@ -6,6 +6,9 @@ let dark = false;
 let STROKE_COLOR = "#222222";
 let STROKE_COLOR_DARK = "#aaaaaa";
 //#region geometry
+function distance(pt1, pt2) {
+    return Math.sqrt((pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y));
+}
 class Point {
     constructor(x, y) {
         this.x = x;
@@ -34,6 +37,18 @@ class Circle {
     constructor(center, radius) {
         this.center = center;
         this.r = radius;
+        this.rx = this.r;
+        this.ry = this.r;
+        this.x1 = new Point(this.center.x - this.r, this.center.y);
+        this.x2 = new Point(this.center.x + this.r, this.center.y);
+        this.y1 = new Point(this.center.x, this.center.y - this.r);
+        this.y2 = new Point(this.center.x, this.center.y + this.r);
+        this.angle = 0;
+    }
+    update() {
+        this.rx = distance(this.x1, this.x2) / 2.0;
+        this.ry = distance(this.y1, this.y2) / 2.0;
+        this.angle = Math.atan2(this.x2.y - this.x1.y, this.x2.x - this.x1.x);
     }
 }
 class Line {
@@ -164,26 +179,15 @@ class Logic {
         }
     }
     draw_figure(graph) {
-        graph.drawTriangle(center_triangle);
         graph.drawPolygon(square_left);
         graph.drawPolygon(square_right);
-        graph.drawCircle(center_circle, false);
+        graph.drawCircleManually(center_circle, 0, Math.PI * 2);
+        graph.drawEllipseManually(fig_ellipse.center.x, fig_ellipse.center.y, fig_ellipse.width, fig_ellipse.height, fig_ellipse.startAngle, fig_ellipse.endAngle);
         graph.drawEllipse(fig_ellipse);
     }
     draw_fg() {
+        this.fg_graphics.transformations = this.transformations;
         this.draw_figure(this.fg_graphics);
-        if (!this.transformations.length) {
-            return;
-        }
-        for (let i = 0; i < this.transformations.length; ++i) {
-            this.buf_graphics.endFrame();
-            this.buf_graphics.context.setTransform(1, 0, 0, 1, 0, 0);
-            this.transformations[i].apply(this.buf_graphics);
-            this.buf_graphics.drawCanvas(this.fg_graphics.context_node);
-            this.fg_graphics.endFrame();
-            this.fg_graphics.drawCanvas(this.buf_graphics.context_node);
-            this.buf_graphics.endFrame();
-        }
     }
     addTransformation(transf) {
         this.transformations.push(transf);
@@ -209,6 +213,15 @@ class Transformation {
     getPoint() {
         return null;
     }
+    transformPoint(pt) {
+        return pt;
+    }
+    transformAngle(angle) {
+        return angle;
+    }
+    transformCircle(circ) {
+        return circ;
+    }
 }
 class RotateTransformation extends Transformation {
     constructor(pivot, angle) {
@@ -225,6 +238,24 @@ class RotateTransformation extends Transformation {
     getPoint() {
         return this.pivot;
     }
+    transformPoint(pt) {
+        //prettier-ignore
+        return new Point((pt.x - this.pivot.x) * Math.cos(this.angle) - (pt.y - this.pivot.y) * Math.sin(this.angle) + this.pivot.x, (pt.x - this.pivot.x) * Math.sin(this.angle) + (pt.y - this.pivot.y) * Math.cos(this.angle) + this.pivot.y);
+    }
+    transformAngle(angle) {
+        return angle + this.angle;
+    }
+    transformCircle(circ) {
+        let res = new Circle(circ.center, circ.r);
+        res.center = this.transformPoint(circ.center);
+        res.x1 = this.transformPoint(circ.x1);
+        res.x2 = this.transformPoint(circ.x2);
+        res.y1 = this.transformPoint(circ.y1);
+        res.y2 = this.transformPoint(circ.y2);
+        res.update();
+        console.log(circ, res);
+        return res;
+    }
 }
 class ScaleTransformation extends Transformation {
     constructor(origin, scale) {
@@ -239,6 +270,23 @@ class ScaleTransformation extends Transformation {
     getPoint() {
         return this.origin;
     }
+    transformPoint(pt) {
+        //prettier-ignore
+        return new Point(pt.x * this.scale.x + this.origin.x * (1 - this.scale.x), pt.y * this.scale.y + this.origin.y * (1 - this.scale.y));
+    }
+    transformRadiuses(rads, angle) {
+        return { x: rads.x * this.scale.x, y: rads.y * this.scale.y };
+    }
+    transformCircle(circ) {
+        let res = new Circle(circ.center, circ.r);
+        res.center = this.transformPoint(circ.center);
+        res.x1 = this.transformPoint(circ.x1);
+        res.x2 = this.transformPoint(circ.x2);
+        res.y1 = this.transformPoint(circ.y1);
+        res.y2 = this.transformPoint(circ.y2);
+        res.update();
+        return res;
+    }
 }
 class TranslateTransformation extends Transformation {
     constructor(translation) {
@@ -247,6 +295,10 @@ class TranslateTransformation extends Transformation {
     }
     apply(graph) {
         graph.context.transform(1, 0, 0, 1, this.translation.x * graph.scale, this.translation.y * graph.scale);
+    }
+    transformPoint(pt) {
+        //prettier-ignore
+        return new Point(pt.x + this.translation.x, pt.y + this.translation.y);
     }
 }
 //#region figure
@@ -350,22 +402,64 @@ class Graphics {
         this.context.restore();
     }
     drawCircle(circ, addText = false, context = this.context, color) {
-        let cpt = this.getCanvasCoords(circ.center);
+        let circle = circ;
+        let cpt = circ.center;
+        for (let tr of this.transformations)
+            circle = tr.transformCircle(circle);
+        cpt = this.getCanvasCoords(circle.center);
+        circle.rx *= this.scale;
+        circle.ry *= this.scale;
         context.beginPath();
         let prevColor = context.strokeStyle;
         if (color)
             context.strokeStyle = color;
-        context.arc(cpt.x, cpt.y, circ.r * this.scale, 0, Math.PI * 2);
+        // context.arc(cpt.x, cpt.y, circ.r * this.scale, 0, Math.PI * 2);
+        context.ellipse(cpt.x, cpt.y, circle.rx, circle.ry, circle.angle, 0, Math.PI * 2, false);
         context.stroke();
         context.strokeStyle = prevColor;
         context.closePath();
-        if (addText)
+        if (addText) {
             this.drawPoint(circ.center, `C: ${circ.center.toString()}`, context, color);
+            this.drawPoint(circle.x1, `x1: ${circle.x1.toString()}`, context, color);
+            this.drawPoint(circle.x2, `x1: ${circle.x2.toString()}`, context, color);
+            this.drawPoint(circle.y1, `x1: ${circle.y1.toString()}`, context, color);
+            this.drawPoint(circle.y2, `x1: ${circle.y2.toString()}`, context, color);
+        }
+    }
+    drawCircleManually(circ, minAngle, maxAngle) {
+        let r = circ.r;
+        let cx = circ.center.x;
+        let cy = circ.center.y;
+        let start;
+        this.context.beginPath();
+        for (let angle = minAngle; angle < maxAngle; angle += 1 / r) {
+            let pt = new Point(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+            for (let tr of this.transformations)
+                pt = tr.transformPoint(pt);
+            pt = this.getCanvasCoords(pt);
+            if (start === undefined) {
+                start = pt;
+                this.context.moveTo(start.x, start.y);
+            }
+            else
+                this.context.lineTo(pt.x, pt.y);
+        }
+        this.context.lineTo(start.x, start.y);
+        this.context.stroke();
+        this.context.closePath();
     }
     drawTriangle(tri, context = this.context, color) {
-        let p1 = this.getCanvasCoords(tri.vertex1);
-        let p2 = this.getCanvasCoords(tri.vertex2);
-        let p3 = this.getCanvasCoords(tri.vertex3);
+        let p1 = new Point(tri.vertex1.x, tri.vertex1.y);
+        let p2 = new Point(tri.vertex2.x, tri.vertex2.y);
+        let p3 = new Point(tri.vertex3.x, tri.vertex3.y);
+        for (let tr of this.transformations) {
+            p1 = tr.transformPoint(p1);
+            p2 = tr.transformPoint(p2);
+            p3 = tr.transformPoint(p3);
+        }
+        p1 = this.getCanvasCoords(p1);
+        p2 = this.getCanvasCoords(p2);
+        p3 = this.getCanvasCoords(p3);
         context.beginPath();
         let prevColor = context.strokeStyle;
         if (color)
@@ -383,26 +477,39 @@ class Graphics {
         let prevColor = context.strokeStyle;
         if (color)
             context.strokeStyle = color;
-        let p1 = this.getCanvasCoords(poly.vertexes[0]);
-        context.moveTo(p1.x, p1.y);
-        for (let i = 1; i < poly.vertexes.length; ++i) {
-            let pt = this.getCanvasCoords(poly.vertexes[i]);
-            context.lineTo(pt.x, pt.y);
+        let start;
+        for (let i = 0; i < poly.vertexes.length; ++i) {
+            let pt = new Point(poly.vertexes[i].x, poly.vertexes[i].y);
+            for (let tr of this.transformations)
+                pt = tr.transformPoint(pt);
+            pt = this.getCanvasCoords(pt);
+            if (i == 0) {
+                start = pt;
+                this.context.moveTo(pt.x, pt.y);
+            }
+            else
+                this.context.lineTo(pt.x, pt.y);
         }
-        context.lineTo(p1.x, p1.y);
+        context.lineTo(start.x, start.y);
         context.stroke();
         context.strokeStyle = prevColor;
         context.closePath();
     }
     drawSegment(p1, p2, context = this.context, color) {
-        let ctx_p1 = this.getCanvasCoords(p1);
-        let ctx_p2 = this.getCanvasCoords(p2);
+        let pt1 = new Point(p1.x, p1.y);
+        let pt2 = new Point(p2.x, p2.y);
+        for (let tr of this.transformations) {
+            pt1 = tr.transformPoint(pt1);
+            pt2 = tr.transformPoint(pt2);
+        }
+        pt1 = this.getCanvasCoords(pt1);
+        pt2 = this.getCanvasCoords(pt2);
         context.beginPath();
         let prevColor = context.strokeStyle;
         if (color)
             context.strokeStyle = color;
-        context.moveTo(ctx_p1.x, ctx_p1.y);
-        context.lineTo(ctx_p2.x, ctx_p2.y);
+        context.moveTo(pt1.x, pt1.y);
+        context.lineTo(pt2.x, pt2.y);
         context.stroke();
         context.strokeStyle = prevColor;
         context.closePath();
@@ -417,6 +524,26 @@ class Graphics {
         context.stroke();
         context.strokeStyle = prevColor;
         context.closePath();
+    }
+    drawEllipseManually(xc, yc, rx, ry, minAngle, maxAngle) {
+        this.context.beginPath();
+        let maxr = Math.max(rx, ry);
+        let start;
+        for (let angle = minAngle; angle < maxAngle; angle += 1 / maxr) {
+            let pt = new Point(xc + rx * Math.cos(angle), yc + ry * Math.sin(angle));
+            for (let tr of this.transformations)
+                pt = tr.transformPoint(pt);
+            pt = this.getCanvasCoords(pt);
+            if (start === undefined) {
+                start = pt;
+                this.context.moveTo(start.x, start.y);
+            }
+            else
+                this.context.lineTo(pt.x, pt.y);
+        }
+        this.context.lineTo(start.x, start.y);
+        this.context.stroke();
+        this.context.closePath();
     }
     drawCanvas(canvas, dx = 0, dy = 0) {
         this.context.drawImage(canvas, dx, dy);
@@ -473,10 +600,19 @@ const bg_graphics = new Graphics(bg_ctx, bg_canvas, "#cccccc");
 const graphics_arr = [graphics, buf_graphics, bg_graphics];
 //#endregion graphics
 const logic = new Logic(graphics, buf_graphics, bg_graphics);
-let test = new ScaleTransformation(new Point(100, 100), { x: 1.3, y: -0.75 });
-let test2 = new RotateTransformation(new Point(0, 0), toRad(30));
-logic.addTransformation(test);
-logic.addTransformation(test2);
+// let test = new RotateTransformation(new Point(0, 0), toRad(90));
+// let test2 = new ScaleTransformation(new Point(0, 0), { x: 1, y: 2 });
+// let test3 = new RotateTransformation(new Point(-100, 100), toRad(35));
+// let test4 = new ScaleTransformation(new Point(0, 0), { x: 0.7, y: 2 });
+// let test5 = new RotateTransformation(new Point(-120, -100), toRad(180));
+let test6 = new ScaleTransformation(new Point(0, 0), { x: 0.1, y: 0.1 });
+// logic.addTransformation(test2);
+// logic.addTransformation(test);
+// logic.addTransformation(test3);
+// logic.addTransformation(test4);
+// logic.addTransformation(test5);
+logic.addTransformation(test6);
+// logic.addTransformation(test);
 run_button.addEventListener("click", () => {
     graphics_arr.forEach((graphics) => {
         graphics.endFrame();
