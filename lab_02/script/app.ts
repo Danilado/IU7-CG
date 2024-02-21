@@ -876,13 +876,3 @@ run_button.addEventListener("click", () => {
   logic.draw_bg();
   logic.draw_fg();
 });
-
-/*
-transform(a, b, c, d, e, f)
-
-          [a b 0]   [ax + cy + e]
-[x y 1] x [c d 0]-> [bx + dy + f]
-          [e f 1]   [     1     ]
-
-(x, y, 1) -> (ax + cy + e , bx + dy + f, 1)
-*/
