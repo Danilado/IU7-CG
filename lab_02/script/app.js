@@ -13,7 +13,7 @@ class Point {
         this.y = y;
     }
     toString() {
-        return `(${this.x}, ${this.y})`;
+        return `(${toPrecision(this.x, 1)}, ${toPrecision(this.y, 1)})`;
     }
 }
 function pointsAreEqual(p1, p2) {
@@ -98,12 +98,12 @@ add_scale.addEventListener("click", () => {
     cy = Number(input_origin_y.value);
     if (Number.isNaN(cx) || Number.isNaN(cy))
         return out.error("Ошибка считывания координат центра масштабирования");
-    if (Math.abs(cx) < EPS || Math.abs(cy) < EPS)
-        return out.error(`Ошибка: Попытка масштабирования с нулевым коэффицентом`);
     kx = Number(input_kx.value);
     ky = Number(input_ky.value);
     if (Number.isNaN(kx) || Number.isNaN(ky))
         return out.error("Ошибка считывания коэффицентов масштабирования");
+    if (Math.abs(kx) < EPS || Math.abs(ky) < EPS)
+        return out.error(`Ошибка: Попытка масштабирования с нулевым коэффицентом`);
     logic.addTransformation(new ScaleTransformation(new Point(cx, cy), { x: kx, y: ky }));
     logic.update();
 });
@@ -157,7 +157,6 @@ class Output {
 const out = new Output(output_node);
 clear_output.addEventListener("click", () => {
     out.clear();
-    graphics.endFrame();
 });
 //#endregion
 change_theme.addEventListener("click", () => {
@@ -200,6 +199,7 @@ class Logic {
         graph.drawPolygon(square_right);
         graph.drawCircleManually(center_circle, 0, Math.PI * 2);
         graph.drawEllipseManually(fig_ellipse.center.x, fig_ellipse.center.y, fig_ellipse.width, fig_ellipse.height, fig_ellipse.startAngle, fig_ellipse.endAngle);
+        graph.drawPoint(center_circle.center, `<COORDS>`, graph.context, "#00FF00");
     }
     draw_fg() {
         this.fg_graphics.transformations = this.transformations;
@@ -415,7 +415,10 @@ class Graphics {
             this.miny > pt.y ||
             this.maxy < pt.y)
             return null;
-        let cpt = this.getCanvasCoords(pt);
+        let tmp = new Point(pt.x, pt.y);
+        for (let tr of this.transformations)
+            tmp = tr.transformPoint(tmp);
+        let cpt = this.getCanvasCoords(tmp);
         if (!cpt)
             return;
         context.beginPath();
@@ -424,6 +427,7 @@ class Graphics {
             context.strokeStyle = color;
         if (color)
             context.fillStyle = color;
+        text = text.replace(/<COORDS>/, tmp.toString());
         context.arc(cpt.x, cpt.y, 3, 0, Math.PI * 2);
         context.fill();
         context.closePath();
