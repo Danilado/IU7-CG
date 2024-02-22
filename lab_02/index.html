@@ -9,13 +9,23 @@
   <body>
     <div class="main">
       <div class="inputs">
+        <!--origin-->
         <div class="verbal">
+          <div>Координаты центра трансформации</div>
           <div class="row">
             <input
-              type="button"
-              value="Рассчитать"
-              id="submit"
-              class="widebutton"
+              type="text"
+              name=""
+              id="origin-x"
+              class="texinput"
+              placeholder="x точки центра трансформации"
+            />
+            <input
+              type="text"
+              name=""
+              id="origin-y"
+              class="texinput"
+              placeholder="y точки центра трансформации"
             />
           </div>
         </div>
@@ -26,34 +36,95 @@
             <input
               type="text"
               class="texinput"
-              placeholder="x центра"
-              id="ixcenter"
-            />
-            <input
-              type="text"
-              class="texinput"
-              placeholder="y центра"
-              id="iycenter"
-            />
-            <input
-              type="text"
-              class="texinput"
               placeholder="угол в градусах"
-              id="iradius"
+              id="i-angle"
             />
           </div>
           <div class="row">
-            <input type="button" value="применить" class="widebutton" />
+            <input
+              type="button"
+              value="применить"
+              class="widebutton"
+              id="add_rotation"
+            />
+          </div>
+        </div>
+        <!--scale-->
+        <div class="verbal">
+          <div>Трансформация - масштабирование</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="kx"
+              placeholder="kx"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="ky"
+              placeholder="ky"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="применить"
+              class="widebutton"
+              id="add_scale"
+            />
           </div>
         </div>
         <!--shift-->
-
-        <!--scale-->
+        <div class="verbal">
+          <div>Трансформация - смещение</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="dx"
+              placeholder="dx"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="dy"
+              placeholder="dy"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="применить"
+              class="widebutton"
+              id="add_translation"
+            />
+          </div>
+        </div>
+        <div class="transformations"></div>
+        <div class="verbal bottom" style="margin-top: auto">
+          <div class="row">
+            <input
+              type="button"
+              value="Удалить все трансформации"
+              id="clearall"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <div class="verbal bottom">
+          Пределы холста:<br />
+          x: [-800, 800]<br />
+          y: [-400, 400]
+        </div>
       </div>
       <div class="container">
         <canvas id="dynamicPlane" style="z-index: 10"></canvas>
         <canvas id="staticPlane"></canvas>
-        <canvas id="tmp"></canvas>
       </div>
     </div>
     <div class="footer">

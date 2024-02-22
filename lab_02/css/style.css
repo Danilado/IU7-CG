@@ -52,11 +52,22 @@ input.dark:active, input.dark:focus {
 .row .texinput {
   flex: 1;
 }
+.row .tranformtext {
+  flex: 100;
+  margin: 10px 0;
+  border: none;
+  height: -moz-fit-content;
+  height: fit-content;
+}
 .row .coordedit {
   flex: 1;
 }
 .row .button {
-  flex: 0.15;
+  flex: 1;
+  min-width: -moz-fit-content;
+  min-width: fit-content;
+  height: -moz-fit-content;
+  height: fit-content;
   text-align: center;
 }
 .row .button:active {
@@ -80,8 +91,9 @@ canvas {
   position: absolute;
   background: transparent;
 }
-canvas #tmp {
-  visibility: hidden;
+canvas.dark {
+  background: transparent;
+  filter: invert(1);
 }
 
 body {
@@ -126,7 +138,7 @@ body .main .inputs .verbal.bottom.dark {
 body .main .inputs .verbal.bottom:first-child {
   margin-top: auto;
 }
-body .main .inputs .points {
+body .main .inputs .transformations {
   overflow-y: scroll;
 }
 body .main .container {

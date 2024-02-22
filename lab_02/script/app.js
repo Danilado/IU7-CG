@@ -3,8 +3,6 @@ const EPS = 1e-10;
 const DEBUG = false;
 const RENDER_SCALE = 1;
 let dark = false;
-let STROKE_COLOR = "#222222";
-let STROKE_COLOR_DARK = "#aaaaaa";
 //#region geometry
 function distance(pt1, pt2) {
     return Math.sqrt((pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y));
@@ -37,42 +35,6 @@ class Circle {
     constructor(center, radius) {
         this.center = center;
         this.r = radius;
-        this.rx = this.r;
-        this.ry = this.r;
-        this.x1 = new Point(this.center.x - this.r, this.center.y);
-        this.x2 = new Point(this.center.x + this.r, this.center.y);
-        this.y1 = new Point(this.center.x, this.center.y - this.r);
-        this.y2 = new Point(this.center.x, this.center.y + this.r);
-        this.angle = 0;
-    }
-    update() {
-        this.rx = distance(this.x1, this.x2) / 2.0;
-        this.ry = distance(this.y1, this.y2) / 2.0;
-        this.angle = Math.atan2(this.x2.y - this.x1.y, this.x2.x - this.x1.x);
-    }
-}
-class Line {
-    constructor(p1, p2) {
-        this.p1 = p1;
-        this.p2 = p2;
-        this.k = (p2.y - p1.y) / (p2.x - p1.x);
-        this.c = p1.y - this.k * p1.x;
-    }
-    getYbyX(x) {
-        if (!Number.isFinite(this.k))
-            return null;
-        return x * this.k + this.c;
-    }
-    getXbyY(y) {
-        if (!this.k)
-            return null;
-        return (y - this.c) / this.k;
-    }
-    isHorizontal() {
-        return !this.k;
-    }
-    isVertical() {
-        return !Number.isFinite(this.k);
     }
 }
 class Ellipse {
@@ -97,17 +59,74 @@ function toPrecision(num, precision) {
 }
 //#endregion geometry
 //#region interface
-// const input_center_x: HTMLInputElement = document.querySelector("#ixcenter")!;
-// const input_center_y: HTMLInputElement = document.querySelector("#iycenter")!;
-// const input_radius: HTMLInputElement = document.querySelector("#iradius")!;
-const run_button = document.querySelector("#submit");
-// const input_x: HTMLInputElement = document.querySelector("#inewx")!;
-// const input_y: HTMLInputElement = document.querySelector("#inewy")!;
-// const add_point: HTMLInputElement = document.querySelector("#padd")!;
-// const clear_points: HTMLInputElement = document.querySelector("#clearall")!;
+const input_origin_x = document.querySelector("#origin-x");
+const input_origin_y = document.querySelector("#origin-y");
+const input_angle = document.querySelector("#i-angle");
+const input_kx = document.querySelector("#kx");
+const input_ky = document.querySelector("#ky");
+const input_dx = document.querySelector("#dx");
+const input_dy = document.querySelector("#dy");
+const add_rotation = document.querySelector("#add_rotation");
+const add_scale = document.querySelector("#add_scale");
+const add_translate = document.querySelector("#add_translation");
 const clear_output = document.querySelector("#clearout");
 const output_node = document.querySelector(".footertext");
 const change_theme = document.querySelector("#themechange");
+const clear_all = document.querySelector("#clearall");
+const transformations_node = document.querySelector(".transformations");
+add_rotation.addEventListener("click", () => {
+    let cx;
+    let cy;
+    let angle;
+    cx = Number(input_origin_x.value);
+    cy = Number(input_origin_y.value);
+    if (Number.isNaN(cx) || Number.isNaN(cy))
+        return out.error("Ошибка считывания координат центра врщения");
+    angle = Number(input_angle.value);
+    if (Number.isNaN(angle))
+        return out.error("Ошибка считывания угла поворота");
+    angle = toRad(angle);
+    logic.addTransformation(new RotateTransformation(new Point(cx, cy), angle));
+    logic.update();
+});
+add_scale.addEventListener("click", () => {
+    let cx;
+    let cy;
+    let kx;
+    let ky;
+    cx = Number(input_origin_x.value);
+    cy = Number(input_origin_y.value);
+    if (Number.isNaN(cx) || Number.isNaN(cy))
+        return out.error("Ошибка считывания координат центра масштабирования");
+    if (Math.abs(cx) < EPS || Math.abs(cy) < EPS)
+        return out.error(`Ошибка: Попытка масштабирования с нулевым коэффицентом`);
+    kx = Number(input_kx.value);
+    ky = Number(input_ky.value);
+    if (Number.isNaN(kx) || Number.isNaN(ky))
+        return out.error("Ошибка считывания коэффицентов масштабирования");
+    logic.addTransformation(new ScaleTransformation(new Point(cx, cy), { x: kx, y: ky }));
+    logic.update();
+});
+add_translate.addEventListener("click", () => {
+    let dx = Number(input_dx.value);
+    let dy = Number(input_dy.value);
+    if (Number.isNaN(dx) || Number.isNaN(dy))
+        return out.error("Ошибка считывания смещения");
+    logic.addTransformation(new TranslateTransformation(new Point(dx, dy)));
+    logic.update();
+});
+input_origin_x.addEventListener("input", pushFocus);
+input_origin_y.addEventListener("input", pushFocus);
+clear_all.addEventListener("click", () => {
+    logic.clearAll();
+});
+function pushFocus() {
+    let cx = Number(input_origin_x.value);
+    let cy = Number(input_origin_y.value);
+    if (Number.isNaN(cx) || Number.isNaN(cy))
+        return;
+    logic.drawFocus(new Point(cx, cy));
+}
 //#region output
 class Output {
     constructor(node) {
@@ -152,14 +171,12 @@ change_theme.addEventListener("click", () => {
         for (let node of everything) {
             node.classList.remove("dark");
         }
-    graphics.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
-    graphics.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
 });
+change_theme.click();
 class Logic {
-    constructor(fg_graphics, buf_graphics, bg_graphics) {
+    constructor(fg_graphics, bg_graphics) {
         this.transformations = [];
         this.fg_graphics = fg_graphics;
-        this.buf_graphics = buf_graphics;
         this.bg_graphics = bg_graphics;
     }
     draw_bg() {
@@ -168,7 +185,7 @@ class Logic {
         for (let transf of this.transformations) {
             let tmp = transf.getPoint();
             if (tmp) {
-                points.filter((el) => {
+                points = points.filter((el) => {
                     return !pointsAreEqual(el, tmp);
                 });
                 points.push(tmp);
@@ -183,7 +200,6 @@ class Logic {
         graph.drawPolygon(square_right);
         graph.drawCircleManually(center_circle, 0, Math.PI * 2);
         graph.drawEllipseManually(fig_ellipse.center.x, fig_ellipse.center.y, fig_ellipse.width, fig_ellipse.height, fig_ellipse.startAngle, fig_ellipse.endAngle);
-        graph.drawEllipse(fig_ellipse);
     }
     draw_fg() {
         this.fg_graphics.transformations = this.transformations;
@@ -191,24 +207,56 @@ class Logic {
     }
     addTransformation(transf) {
         this.transformations.push(transf);
+        transformations_node.appendChild(transf.node);
+        transf.remove_btn.addEventListener("click", () => {
+            transformations_node.removeChild(transf.node);
+            this.transformations = this.transformations.filter((el) => {
+                return el !== transf;
+            });
+            this.update();
+        });
+        transf.activated_check.addEventListener("click", () => {
+            this.update();
+        });
+    }
+    drawFocus(pt) {
+        this.bg_graphics.endFrame();
+        this.draw_bg();
+        this.bg_graphics.drawPoint(pt, "ЦТ", this.bg_graphics.context, "#FF0088", {
+            x: 0,
+            y: 20,
+        });
+    }
+    update() {
+        this.fg_graphics.endFrame();
+        this.draw_fg();
+        pushFocus();
+    }
+    clearAll() {
+        transformations_node.innerHTML = "";
+        this.transformations = [];
+        this.update();
     }
 }
 //#endregion
 //#region graphics
 const bg_canvas = document.querySelector("#staticPlane");
 const fg_canvas = document.querySelector("#dynamicPlane");
-const buf_canvas = document.querySelector("#tmp");
 fg_canvas.width = Math.round(fg_canvas.getBoundingClientRect().width * RENDER_SCALE);
 fg_canvas.height = Math.round(fg_canvas.getBoundingClientRect().height * RENDER_SCALE);
 bg_canvas.width = Math.round(fg_canvas.getBoundingClientRect().width * RENDER_SCALE);
 bg_canvas.height = Math.round(fg_canvas.getBoundingClientRect().height * RENDER_SCALE);
-buf_canvas.width = Math.round(fg_canvas.getBoundingClientRect().width * 4 * RENDER_SCALE);
-buf_canvas.height = Math.round(fg_canvas.getBoundingClientRect().height * 4 * RENDER_SCALE);
 const fg_ctx = fg_canvas.getContext("2d");
 const bg_ctx = bg_canvas.getContext("2d");
-const buf_ctx = buf_canvas.getContext("2d");
 class Transformation {
-    constructor() { }
+    constructor() {
+        this.node = document.createElement("div");
+        this.textfiled = document.createElement("div");
+        this.remove_btn = document.createElement("input");
+        this.activated_check = document.createElement("input");
+        this.activated = true;
+        this._buildNode();
+    }
     apply(graph) { }
     getPoint() {
         return null;
@@ -216,14 +264,47 @@ class Transformation {
     transformPoint(pt) {
         return pt;
     }
+    _buildNode() {
+        this.node.classList.add("row");
+        this._buildDelButton();
+        this._buildCheckBox();
+        this.textfiled.classList.add("tranformtext");
+        this.node.appendChild(this.textfiled);
+        this.node.appendChild(this.activated_check);
+        this.node.appendChild(this.remove_btn);
+        if (dark) {
+            this.node.classList.add("dark");
+            this.textfiled.classList.add("dark");
+            this.activated_check.classList.add("dark");
+            this.remove_btn.classList.add("dark");
+        }
+    }
+    _buildDelButton() {
+        this.remove_btn.type = "button";
+        this.remove_btn.value = "⨯";
+        this.remove_btn.classList.add("button");
+    }
+    _buildCheckBox() {
+        this.activated_check.style.minWidth = "4em";
+        this.activated_check.type = "button";
+        this.activated_check.classList.add("button");
+        this.activated_check.value = "ВКЛ";
+        this.activated_check.addEventListener("click", () => {
+            this.activated = !this.activated;
+            this.activated_check.value = this.activated ? "ВКЛ" : "ВЫКЛ";
+        });
+    }
 }
 class RotateTransformation extends Transformation {
     constructor(pivot, angle) {
         super();
         this.pivot = pivot;
         this.angle = angle;
+        this.textfiled.innerHTML = `Вращение<br/>Угол: ${toPrecision(toDeg(this.angle), 3)}град.<br/>центр: ${this.pivot.toString()}`;
     }
     apply(graph) {
+        if (!this.activated)
+            return;
         let tmp_pivot = graph.getCanvasCoords(this.pivot);
         graph.context.translate(tmp_pivot.x, tmp_pivot.y);
         graph.context.rotate(this.angle);
@@ -233,6 +314,8 @@ class RotateTransformation extends Transformation {
         return this.pivot;
     }
     transformPoint(pt) {
+        if (!this.activated)
+            return pt;
         //prettier-ignore
         return new Point((pt.x - this.pivot.x) * Math.cos(this.angle) - (pt.y - this.pivot.y) * Math.sin(this.angle) + this.pivot.x, (pt.x - this.pivot.x) * Math.sin(this.angle) + (pt.y - this.pivot.y) * Math.cos(this.angle) + this.pivot.y);
     }
@@ -242,8 +325,11 @@ class ScaleTransformation extends Transformation {
         super();
         this.origin = origin;
         this.scale = scale;
+        this.textfiled.innerHTML = `Масштабирование<br/>kx: ${this.scale.x} ky: ${this.scale.y}<br/>центр: ${this.origin.toString()}`;
     }
     apply(graph) {
+        if (!this.activated)
+            return;
         let tmp_origin = graph.getCanvasCoords(this.origin);
         graph.context.transform(this.scale.x, 0, 0, this.scale.y, tmp_origin.x * (1 - this.scale.x), tmp_origin.y * (1 - this.scale.y));
     }
@@ -251,6 +337,8 @@ class ScaleTransformation extends Transformation {
         return this.origin;
     }
     transformPoint(pt) {
+        if (!this.activated)
+            return pt;
         //prettier-ignore
         return new Point(pt.x * this.scale.x + this.origin.x * (1 - this.scale.x), pt.y * this.scale.y + this.origin.y * (1 - this.scale.y));
     }
@@ -259,11 +347,16 @@ class TranslateTransformation extends Transformation {
     constructor(translation) {
         super();
         this.translation = translation;
+        this.textfiled.innerHTML = `Смещение<br/>dx: ${this.translation.x} dy: ${this.translation.y}`;
     }
     apply(graph) {
+        if (!this.activated)
+            return;
         graph.context.transform(1, 0, 0, 1, this.translation.x * graph.scale, this.translation.y * graph.scale);
     }
     transformPoint(pt) {
+        if (!this.activated)
+            return pt;
         //prettier-ignore
         return new Point(pt.x + this.translation.x, pt.y + this.translation.y);
     }
@@ -310,15 +403,13 @@ class Graphics {
             this.context.fillStyle = color;
             this.context.strokeStyle = color;
         }
-        else {
-            this.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
-            this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
-        }
+        else
+            this.context.fillStyle = "#222222";
     }
     getCanvasCoords(pt) {
         return new Point(this.base.x + (pt.x - this.minx) * this.scale, -(this.base.y + (pt.y - this.miny) * this.scale));
     }
-    drawPoint(pt, text, context = this.context, color) {
+    drawPoint(pt, text, context = this.context, color, textOffset) {
         if (this.minx > pt.x ||
             this.maxx < pt.x ||
             this.miny > pt.y ||
@@ -336,8 +427,14 @@ class Graphics {
         context.arc(cpt.x, cpt.y, 3, 0, Math.PI * 2);
         context.fill();
         context.closePath();
+        let xoffset = 0;
+        let yoffset = -10;
+        if (textOffset) {
+            xoffset = textOffset.x;
+            yoffset = textOffset.y;
+        }
         context.beginPath();
-        context.fillText(text, cpt.x, cpt.y - 10 * RENDER_SCALE);
+        context.fillText(text, cpt.x + xoffset * RENDER_SCALE, cpt.y + yoffset * RENDER_SCALE);
         context.closePath();
         this.context.restore();
     }
@@ -429,17 +526,6 @@ class Graphics {
         context.strokeStyle = prevColor;
         context.closePath();
     }
-    drawEllipse(el, context = this.context, color) {
-        let cpt = this.getCanvasCoords(el.center);
-        context.beginPath();
-        let prevColor = context.strokeStyle;
-        if (color)
-            context.strokeStyle = color;
-        context.ellipse(cpt.x, cpt.y, el.width * this.scale, el.height * this.scale, el.rotation, el.startAngle, el.endAngle, el.cc);
-        context.stroke();
-        context.strokeStyle = prevColor;
-        context.closePath();
-    }
     drawEllipseManually(xc, yc, rx, ry, minAngle, maxAngle) {
         this.context.beginPath();
         let maxr = Math.max(rx, ry);
@@ -501,30 +587,23 @@ class Graphics {
         out.log(`x: [${toPrecision(xmin, 2)}; ${toPrecision(xmax, 2)}]   ` +
             `y: [${toPrecision(ymin, 2)}; ${toPrecision(ymax, 2)}]`);
     }
-    updateStrokeColor() {
-        this.context.fillStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
-        this.context.strokeStyle = dark ? STROKE_COLOR_DARK : STROKE_COLOR;
-    }
 }
 window.addEventListener("resize", () => {
     out.warn(`UNIMPLEMENTED Изменение размера холста w: ${Math.round(fg_canvas.getBoundingClientRect().width)} h: ${Math.round(fg_canvas.getBoundingClientRect().height)}`);
 });
-const graphics = new Graphics(fg_ctx, fg_canvas);
-const buf_graphics = new Graphics(buf_ctx, buf_canvas);
-const bg_graphics = new Graphics(bg_ctx, bg_canvas, "#cccccc");
-const graphics_arr = [graphics, buf_graphics, bg_graphics];
+const graphics = new Graphics(fg_ctx, fg_canvas, "black");
+const bg_graphics = new Graphics(bg_ctx, bg_canvas, "#aaaaaa");
+const graphics_arr = [graphics, bg_graphics];
 //#endregion graphics
-const logic = new Logic(graphics, buf_graphics, bg_graphics);
-run_button.addEventListener("click", () => {
-    graphics_arr.forEach((graphics) => {
-        graphics.endFrame();
-        graphics.setBoundaries({
-            x_min: -800,
-            x_max: 800,
-            y_min: -400,
-            y_max: 400,
-        });
+graphics_arr.forEach((graphics) => {
+    graphics.endFrame();
+    graphics.setBoundaries({
+        x_min: -800,
+        x_max: 800,
+        y_min: -400,
+        y_max: 400,
     });
-    logic.draw_bg();
-    logic.draw_fg();
 });
+const logic = new Logic(graphics, bg_graphics);
+logic.update();
+pushFocus();
