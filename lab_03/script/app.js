@@ -1,0 +1,1002 @@
+"use strict";
+const floor = Math.floor;
+const round = Math.round;
+const max = Math.max;
+const abs = Math.abs;
+let DEBUG = true;
+let EPS = 1e-6;
+let dark = false;
+function range(start, end) {
+    let step = Math.sign(end - start);
+    let ret = [];
+    for (let i = start; i != end; i += step)
+        ret.push(i);
+    return ret;
+}
+//#region labels
+const canvasWidthLabel = document.querySelector(".c-width");
+const canvasHeightLabel = document.querySelector(".c-height");
+const change_theme = document.querySelector("#themechange");
+const pointer_x = document.querySelector("#pointer-x");
+const pointer_y = document.querySelector("#pointer-y");
+change_theme.addEventListener("click", () => {
+    dark = !dark;
+    let everything = document.querySelectorAll("*");
+    if (dark)
+        for (let node of everything) {
+            node.classList.add("dark");
+        }
+    else
+        for (let node of everything) {
+            node.classList.remove("dark");
+        }
+});
+// change_theme.click();
+class Output {
+    constructor(node) {
+        this.node = node;
+    }
+    write(text, prefix) {
+        this.node.innerHTML += prefix + text.replace(/\n/, "<br />") + "<br />";
+        this.scrollToBottom();
+    }
+    clear() {
+        this.node.innerHTML = ``;
+    }
+    warn(text) {
+        if (DEBUG)
+            this.write(text, "WARN: ");
+    }
+    log(text) {
+        if (DEBUG)
+            this.write(text, "LOG: ");
+    }
+    error(text) {
+        this.write(text, "ERROR: ");
+    }
+    scrollToBottom() {
+        this.node.scroll(0, this.node.scrollHeight);
+    }
+}
+const output_node = document.querySelector(".footertext");
+const out = new Output(output_node);
+//#endregion labels
+//#region inputs
+class NumberInput {
+    constructor(node) {
+        this.node = node;
+    }
+    validateInput(minN = -Infinity, maxN = Infinity) {
+        let tmp = Number(this.node.value);
+        if (Number.isNaN(tmp))
+            return false;
+        if (tmp < minN)
+            return false;
+        if (tmp > maxN)
+            return false;
+        return true;
+    }
+    value(minN = -Infinity, maxN = Infinity) {
+        let tmp = Number(this.node.value);
+        if (Number.isNaN(tmp))
+            return tmp;
+        if (tmp < minN)
+            return minN;
+        if (tmp > maxN)
+            return maxN;
+        return tmp;
+    }
+}
+class ColorInput {
+    constructor(node) {
+        this.node = node;
+    }
+    validateInput() {
+        return CSS.supports("color", this.node.value);
+    }
+    value() {
+        return this.node.value;
+    }
+}
+// canvas width
+const width_input = new NumberInput(document.querySelector("#i-side-length"));
+// line color
+const i_color_node = document.querySelector("#i-color");
+const color_input = new ColorInput(i_color_node);
+const set_color_default = document.querySelector("#set_default_color");
+set_color_default.addEventListener("click", () => {
+    i_color_node.value = "#000000";
+});
+const set_color_bg = document.querySelector("#set_bg_color");
+set_color_bg.addEventListener("click", () => {
+    i_color_node.value = "#ffffff";
+});
+// coords
+const input_x1 = document.querySelector("#start-x");
+const input_y1 = document.querySelector("#start-y");
+const input_x2 = document.querySelector("#end-x");
+const input_y2 = document.querySelector("#end-y");
+const start_x_input = new NumberInput(input_x1);
+const start_y_input = new NumberInput(input_y1);
+const end_x_input = new NumberInput(input_x2);
+const end_y_input = new NumberInput(input_y2);
+// buttons
+const input_side = document.querySelector("#i-side-length");
+const side_input = new NumberInput(input_side);
+const button_side = document.querySelector("#set_width");
+// const button_: HTMLInputElement = document.querySelector("#")!;
+const button_draw_seg = document.querySelector("#draw_segment");
+//#endregion inputs
+//#region algs
+function fpart(x) {
+    return x - floor(x);
+}
+function rfpart(x) {
+    return 1 - fpart(x);
+}
+function reverseString(str) {
+    var splitString = str.split("");
+    var reverseArray = splitString.reverse();
+    var joinArray = reverseArray.join("");
+    return joinArray;
+}
+function HEXtoInt(s) {
+    return parseInt(s, 16);
+}
+function HEXtoRGB(s) {
+    s = s.replace(/#/, "");
+    return {
+        r: HEXtoInt(s[0] + s[1]),
+        g: HEXtoInt(s[2] + s[3]),
+        b: HEXtoInt(s[4] + s[5]),
+    };
+}
+class LineAlg {
+    static draw(dst, x1, y1, x2, y2, color) {
+        return;
+    }
+    static countSteps(x1, y1, x2, y2) {
+        return 0;
+    }
+    static measureStep(x1, y1, x2, y2) {
+        return 0;
+    }
+    static setPixel(buf, x, y, color, alpha) {
+        let tmp = (round(x) + round(y) * buf.width) * 4;
+        buf.data[tmp] = color.r;
+        buf.data[tmp + 1] = color.g;
+        buf.data[tmp + 2] = color.b;
+        buf.data[tmp + 3] = alpha;
+    }
+}
+class DDA extends LineAlg {
+    static draw(dst, x1, y1, x2, y2, color) {
+        out.log("Работает Алгоритм ЦДА");
+        if (x1 == x2 && y1 == y2)
+            return this.setPixel(dst, x1, y1, color, 255);
+        let l = max(abs(x2 - x1), abs(y2 - y1));
+        let dx = (x2 - x1) / l;
+        let dy = (y2 - y1) / l;
+        let x = x1;
+        let y = y1;
+        for (let i = 0; i <= l; ++i) {
+            this.setPixel(dst, x, y, color, 255);
+            x += dx;
+            y += dy;
+        }
+    }
+    static countSteps(x1, y1, x2, y2) {
+        if (x1 == x2 && y1 == y2)
+            return 0;
+        let measureX = false;
+        let l;
+        if (abs(x2 - x1) > abs(y2 - y1)) {
+            l = abs(x2 - x1);
+        }
+        else {
+            l = abs(y2 - y1);
+            measureX = true;
+        }
+        let dx = (x2 - x1) / l;
+        let dy = (y2 - y1) / l;
+        let x = x1;
+        let y = y1;
+        let stepcount = 1;
+        let prev_val = measureX ? x : y;
+        for (let i = 0; i < l + 1; ++i) {
+            if (measureX) {
+                if (round(prev_val) != round(x))
+                    ++stepcount;
+            }
+            else if (round(prev_val) != round(y))
+                ++stepcount;
+            prev_val = measureX ? x : y;
+            x += dx;
+            y += dy;
+        }
+        return stepcount;
+    }
+    static measureStep(x1, y1, x2, y2) {
+        if (x1 == x2 && y1 == y2)
+            return 1;
+        let measureX = false;
+        let l;
+        if (abs(x2 - x1) > abs(y2 - y1)) {
+            l = abs(x2 - x1);
+        }
+        else {
+            l = abs(y2 - y1);
+            measureX = true;
+        }
+        let dx = (x2 - x1) / l;
+        let dy = (y2 - y1) / l;
+        let x = x1;
+        let y = y1;
+        let maxsteplen = 0;
+        let steplen = 1;
+        let stepping = true;
+        let prev_val = measureX ? x : y;
+        for (let i = 0; i <= l; ++i) {
+            if (measureX) {
+                if (round(prev_val) == round(x)) {
+                    steplen++;
+                    stepping = true;
+                }
+                else if (stepping) {
+                    maxsteplen = max(maxsteplen, steplen);
+                    steplen = 1;
+                    stepping = false;
+                }
+            }
+            else {
+                if (round(prev_val) == round(y)) {
+                    steplen++;
+                    stepping = true;
+                }
+                else if (stepping) {
+                    maxsteplen = max(maxsteplen, steplen);
+                    steplen = 1;
+                    stepping = false;
+                }
+            }
+            prev_val = measureX ? x : y;
+            x += dx;
+            y += dy;
+        }
+        maxsteplen = max(maxsteplen, steplen);
+        return maxsteplen;
+    }
+}
+class BresenhamReal extends LineAlg {
+    static draw(dst, x1, y1, x2, y2, color) {
+        out.log("Работает Алгоритм Брезенхема на действ. числах");
+        // Проверка вырожденности	отрезка.
+        // Если	отрезок вырожденный, то высвечивается точка и осуществляется выход.
+        if (x1 == x2 && y1 == y2)
+            return this.setPixel(dst, x1, y1, color, 255);
+        // Вычисление приращений  dX=Xк-Xн и  dY=Yк-Yн.
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        // Вычисление шага изменения каждой координаты пиксела: SX=sign(dX), SY=sign(dY).
+        let sx = Math.sign(dx);
+        let sy = Math.sign(dy);
+        // Вычисление модулей приращения координат: dX = |dX|, dY = |dY|
+        dx = abs(dx);
+        dy = abs(dy);
+        // Вычисление модуля тангенса угла наклона отрезка: m = dY/dX.
+        let tan_abs = dy / dx;
+        // Анализ вычисленного значения m и обмен местами dX и dY при m>1:
+        //      если m>1, то выполнить
+        //      W=dX,
+        //      dX=dY,
+        //      dY=W,
+        //      m=1/m,
+        //      fl=1;
+        //      если m<1, то fl=0
+        let swapflag = false;
+        if (tan_abs > 1) {
+            let buf = dx;
+            dx = dy;
+            dy = buf;
+            tan_abs = 1 / tan_abs;
+            swapflag = true;
+        }
+        // Инициализация начального значения ошибки: f=m-0,5
+        let f = tan_abs - 0.5;
+        //  Инициализация начальных значений координат текущего пиксела:
+        //  X=Xн, Y=Yн
+        let x = x1;
+        let y = y1;
+        for (let i = 0; i < dx + 1; ++i) {
+            // Высвечивание точки с координатами (X,Y).
+            this.setPixel(dst, x, y, color, 255);
+            // Вычисление координат и ошибки для следующего пиксела:
+            if (f >= 0) {
+                if (swapflag)
+                    x += sx;
+                else
+                    y += sy;
+                f -= 1;
+            }
+            if (f < 0) {
+                if (swapflag)
+                    y += sy;
+                else
+                    x += sx;
+            }
+            f += tan_abs;
+        }
+    }
+    static countSteps(x1, y1, x2, y2) {
+        if (x1 == x2 && y1 == y2)
+            return 0;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let sx = Math.sign(dx);
+        let sy = Math.sign(dy);
+        dx = abs(dx);
+        dy = abs(dy);
+        let tan_abs = dy / dx;
+        let swapflag = false;
+        if (tan_abs > 1) {
+            let buf = dx;
+            dx = dy;
+            dy = buf;
+            tan_abs = 1 / tan_abs;
+            swapflag = true;
+        }
+        let f = tan_abs - 0.5;
+        let x = x1;
+        let y = y1;
+        let measureX = abs(x2 - x1) < abs(y2 - y1);
+        let stepcount = 1;
+        let prev_val = measureX ? x : y;
+        for (let i = 0; i < dx + 1; ++i) {
+            if (measureX) {
+                if (prev_val != x)
+                    ++stepcount;
+            }
+            else if (prev_val != y)
+                ++stepcount;
+            prev_val = measureX ? x : y;
+            if (f >= 0) {
+                if (swapflag)
+                    x += sx;
+                else
+                    y += sy;
+                f = f - 1;
+            }
+            if (f < 0) {
+                if (swapflag)
+                    y += sy;
+                else
+                    x += sx;
+            }
+            f += tan_abs;
+        }
+        return stepcount;
+    }
+    static measureStep(x1, y1, x2, y2) {
+        if (x1 == x2 && y1 == y2)
+            return 1;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let sx = Math.sign(dx);
+        let sy = Math.sign(dy);
+        dx = abs(dx);
+        dy = abs(dy);
+        let tan_abs = dy / dx;
+        let swapflag = false;
+        if (tan_abs > 1) {
+            let buf = dx;
+            dx = dy;
+            dy = buf;
+            tan_abs = 1 / tan_abs;
+            swapflag = true;
+        }
+        let f = tan_abs - 0.5;
+        let x = x1;
+        let y = y1;
+        let measureX = abs(x2 - x1) < abs(y2 - y1);
+        let maxsteplen = 0;
+        let steplen = 1;
+        let stepping = true;
+        let prev_val = measureX ? x : y;
+        for (let i = 0; i < dx + 1; ++i) {
+            if (measureX) {
+                if (prev_val == x) {
+                    steplen++;
+                    stepping = true;
+                }
+                else if (stepping) {
+                    maxsteplen = max(maxsteplen, steplen);
+                    steplen = 1;
+                    stepping = false;
+                }
+            }
+            else {
+                if (prev_val == y) {
+                    steplen++;
+                    stepping = true;
+                }
+                else if (stepping) {
+                    maxsteplen = max(maxsteplen, steplen);
+                    steplen = 1;
+                    stepping = false;
+                }
+            }
+            prev_val = measureX ? x : y;
+            if (f >= 0) {
+                if (swapflag)
+                    x += sx;
+                else
+                    y += sy;
+                f = f - 1;
+            }
+            if (f < 0) {
+                if (swapflag)
+                    y += sy;
+                else
+                    x += sx;
+            }
+            f += tan_abs;
+        }
+        return maxsteplen;
+    }
+}
+class BresenhamInt extends LineAlg {
+    static draw(dst, x1, y1, x2, y2, color) {
+        out.log("Работает Целочисленный Алгоритм Брезенхема");
+        if (x1 == x2 && y1 == y2)
+            return this.setPixel(dst, x1, y1, color, 255);
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let sx = Math.sign(dx);
+        let sy = Math.sign(dy);
+        dx = abs(dx);
+        dy = abs(dy);
+        let f = 0;
+        if (dx > dy)
+            f = 2 * dy - dx;
+        else
+            f = 2 * dx - dy;
+        let y = y1;
+        let x = x1;
+        if (dx > dy)
+            for (let xr of range(x1, x2)) {
+                let xx = +xr;
+                this.setPixel(dst, xx, y, color, 255);
+                if (f > 0) {
+                    y += sy;
+                    f -= 2 * dx;
+                }
+                f += 2 * dy;
+            }
+        else
+            for (let yr of range(y1, y2)) {
+                let yy = +yr;
+                this.setPixel(dst, x, yy, color, 255);
+                if (f > 0) {
+                    x += sx;
+                    f -= 2 * dy;
+                }
+                f += 2 * dx;
+            }
+    }
+    static countSteps(x1, y1, x2, y2) {
+        if (x1 == x2 && y1 == y2)
+            return 0;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let sx = Math.sign(dx);
+        let sy = Math.sign(dy);
+        dx = abs(dx);
+        dy = abs(dy);
+        let tan_abs = dy / dx;
+        let swapflag = false;
+        if (tan_abs > 1) {
+            let buf = dx;
+            dx = dy;
+            dy = buf;
+            tan_abs = 1 / tan_abs;
+            swapflag = true;
+        }
+        let f = 2 * dy - dx;
+        let x = x1;
+        let y = y1;
+        let measureX = abs(x2 - x1) < abs(y2 - y1);
+        let stepcount = 1;
+        let prev_val = measureX ? x : y;
+        for (let i = 0; i < dx + 1; ++i) {
+            if (measureX) {
+                if (prev_val != x)
+                    ++stepcount;
+            }
+            else if (prev_val != y)
+                ++stepcount;
+            prev_val = measureX ? x : y;
+            if (f > 0) {
+                if (swapflag)
+                    x += sx;
+                else
+                    y += sy;
+                f -= 2 * dx;
+            }
+            if (f < 0) {
+                if (swapflag)
+                    y += sy;
+                else
+                    x += sx;
+            }
+            f += 2 * dy;
+        }
+        return stepcount;
+    }
+    static measureStep(x1, y1, x2, y2) {
+        if (x1 == x2 && y1 == y2)
+            return 1;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let sx = Math.sign(dx);
+        let sy = Math.sign(dy);
+        dx = abs(dx);
+        dy = abs(dy);
+        let tan_abs = dy / dx;
+        let swapflag = false;
+        if (tan_abs > 1) {
+            let buf = dx;
+            dx = dy;
+            dy = buf;
+            tan_abs = 1 / tan_abs;
+            swapflag = true;
+        }
+        let f = 2 * dy - dx;
+        let x = x1;
+        let y = y1;
+        let measureX = abs(x2 - x1) < abs(y2 - y1);
+        let maxsteplen = 0;
+        let steplen = 1;
+        let stepping = true;
+        let prev_val = measureX ? x : y;
+        for (let i = 0; i < dx + 1; ++i) {
+            if (measureX) {
+                if (prev_val == x) {
+                    steplen++;
+                    stepping = true;
+                }
+                else if (stepping) {
+                    maxsteplen = max(maxsteplen, steplen);
+                    steplen = 1;
+                    stepping = false;
+                }
+            }
+            else {
+                if (prev_val == y) {
+                    steplen++;
+                    stepping = true;
+                }
+                else if (stepping) {
+                    maxsteplen = max(maxsteplen, steplen);
+                    steplen = 1;
+                    stepping = false;
+                }
+            }
+            prev_val = measureX ? x : y;
+            if (f > 0) {
+                if (swapflag)
+                    x += sx;
+                else
+                    y += sy;
+                f -= 2 * dx;
+            }
+            if (f < 0) {
+                if (swapflag)
+                    y += sy;
+                else
+                    x += sx;
+            }
+            f += 2 * dy;
+        }
+        return maxsteplen;
+    }
+}
+class BresenhamAntiAlias extends LineAlg {
+    static draw(dst, x1, y1, x2, y2, color) {
+        out.log("Работает Алгоритм Брезенхема с устранением ступенчатости");
+        if (x1 == x2 && y1 == y2)
+            return this.setPixel(dst, x1, y1, color, 255);
+        let I = 255;
+        let dX = x2 - x1;
+        let dY = y2 - y1;
+        let sX = Math.sign(dX);
+        let sY = Math.sign(dY);
+        dX = abs(dX);
+        dY = abs(dY);
+        let m = dY / dX;
+        let swapped = false;
+        if (m > 1) {
+            let buf = dX;
+            dX = dY;
+            dY = buf;
+            m = 1 / m;
+            swapped = true;
+        }
+        m = m * I;
+        let f = I / 2;
+        let W = I - m;
+        let x = round(x1);
+        let y = round(y1);
+        x2 = round(x2);
+        y2 = round(y2);
+        this.setPixel(dst, x, y, color, round(f));
+        while (x != round(x2) || y != round(y2)) {
+            if (f <= W) {
+                if (swapped)
+                    y += sY;
+                else
+                    x += sX;
+                f += m;
+            }
+            else if (f > W) {
+                x += sX;
+                y += sY;
+                f = f - W;
+            }
+            this.setPixel(dst, x, y, color, round(f));
+        }
+    }
+    static countSteps(x1, y1, x2, y2) {
+        return BresenhamReal.countSteps(x1, y1, x2, y2);
+    }
+    static measureStep(x1, y1, x2, y2) {
+        return BresenhamReal.measureStep(x1, y1, x2, y2);
+    }
+}
+class Wu extends LineAlg {
+    static draw(dst, x1, y1, x2, y2, color) {
+        out.log("Работает Алгоритм Ву");
+        let steep = abs(y2 - y1) > abs(x2 - x1);
+        if (steep) {
+            let buf = x1;
+            x1 = y1;
+            y1 = buf;
+            buf = x2;
+            x2 = y2;
+            y2 = buf;
+        }
+        if (x1 > x2) {
+            let buf = x1;
+            x1 = x2;
+            x2 = buf;
+            buf = y2;
+            y2 = y1;
+            y1 = buf;
+        }
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let gradient;
+        if (abs(dx) < EPS)
+            gradient = 1;
+        else
+            gradient = dy / dx;
+        let xend = round(x1);
+        let yend = y1 + gradient * (xend - x1);
+        let xgap = rfpart(x1 + 0.5);
+        let xpx1 = xend;
+        let ypx1 = floor(yend);
+        if (steep) {
+            this.setPixel(dst, ypx1, xpx1, color, rfpart(yend) * xgap * 255);
+            this.setPixel(dst, ypx1 + 1, xpx1, color, fpart(yend) * xgap * 255);
+        }
+        else {
+            this.setPixel(dst, xpx1, ypx1, color, rfpart(yend) * xgap * 255);
+            this.setPixel(dst, xpx1, ypx1 + 1, color, fpart(yend) * xgap * 255);
+        }
+        let intersectY = yend + gradient;
+        xend = round(x2);
+        yend = y2 + gradient * (xend - x2);
+        xgap = rfpart(x2 + 0.5);
+        let xpx2 = xend;
+        let ypx2 = floor(yend);
+        if (steep) {
+            this.setPixel(dst, ypx2, xpx2, color, rfpart(yend) * xgap * 255);
+            this.setPixel(dst, ypx2 + 1, xpx2, color, fpart(yend) * xgap * 255);
+        }
+        else {
+            this.setPixel(dst, xpx2, ypx2, color, rfpart(yend) * xgap * 255);
+            this.setPixel(dst, xpx2, ypx2 + 1, color, fpart(yend) * xgap * 255);
+        }
+        if (steep) {
+            for (let x of range(xpx1 + 1, xpx2)) {
+                this.setPixel(dst, floor(intersectY), x, color, rfpart(intersectY) * 255);
+                this.setPixel(dst, floor(intersectY) + 1, x, color, fpart(intersectY) * 255);
+                intersectY += gradient;
+            }
+        }
+        else {
+            for (let x of range(xpx1 + 1, xpx2)) {
+                this.setPixel(dst, x, floor(intersectY), color, rfpart(intersectY) * 255);
+                this.setPixel(dst, x, floor(intersectY) + 1, color, fpart(intersectY) * 255);
+                intersectY += gradient;
+            }
+        }
+    }
+    static countSteps(x1, y1, x2, y2) {
+        let steep = abs(y2 - y1) > abs(x2 - x1);
+        if (steep) {
+            let buf = x1;
+            x1 = y1;
+            y1 = buf;
+            buf = x2;
+            x2 = y2;
+            y2 = buf;
+        }
+        if (x1 > x2) {
+            let buf = x1;
+            x1 = x2;
+            x1 = buf;
+            buf = y2;
+            y2 = y1;
+            y1 = buf;
+        }
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let gradient;
+        if (abs(dx) < EPS)
+            gradient = 1;
+        else
+            gradient = dy / dx;
+        let xend = round(x1);
+        let yend = y1 + gradient * (xend - x1);
+        let xpx1 = xend;
+        let ypx1 = floor(yend);
+        let intersectY = yend + gradient;
+        xend = round(x2);
+        yend = y2 + gradient * (xend - x2);
+        let xpx2 = xend;
+        // let ypx2 = floor(yend);
+        let prev_val = steep ? ypx1 : xpx1;
+        let stepcount = 1;
+        for (let x = xpx1; x <= xpx2; ++x) {
+            if (prev_val != floor(intersectY))
+                ++stepcount;
+            prev_val = floor(intersectY);
+            intersectY += gradient;
+        }
+        return stepcount;
+    }
+    static measureStep(x1, y1, x2, y2) {
+        let steep = abs(y2 - y1) > abs(x2 - x1);
+        if (steep) {
+            let buf = x1;
+            x1 = y1;
+            y1 = buf;
+            buf = x2;
+            x2 = y2;
+            y2 = buf;
+        }
+        if (x1 > x2) {
+            let buf = x1;
+            x1 = x2;
+            x1 = buf;
+            buf = y2;
+            y2 = y1;
+            y1 = buf;
+        }
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let gradient;
+        if (abs(dx) < EPS)
+            gradient = 1;
+        else
+            gradient = dy / dx;
+        let xend = round(x1);
+        let yend = y1 + gradient * (xend - x1);
+        let xpx1 = xend;
+        let ypx1 = floor(yend);
+        let intersectY = yend + gradient;
+        xend = round(x2);
+        yend = y2 + gradient * (xend - x2);
+        let xpx2 = xend;
+        let maxsteplen = 0;
+        let steplen = 1;
+        let stepping = true;
+        let prev_val = steep ? ypx1 : xpx1;
+        for (let x = xpx1; x <= xpx2; ++x) {
+            if (prev_val == floor(intersectY)) {
+                steplen++;
+                stepping = true;
+            }
+            else if (stepping) {
+                maxsteplen = max(maxsteplen, steplen);
+                steplen = 1;
+                stepping = false;
+            }
+            prev_val = floor(intersectY);
+            intersectY += gradient;
+        }
+        maxsteplen = max(maxsteplen, steplen);
+        return maxsteplen;
+    }
+}
+addEventListener("scrollend", () => {
+    console.log("scrollend");
+});
+//#endregion algs
+//#region graphics
+function sumImageData(from, to) {
+    for (let i = 0; i < to.width * to.height * 4; ++i)
+        to.data[i] = from.data[i];
+}
+class Graphics {
+    get width() {
+        return this._width;
+    }
+    set width(v) {
+        this._width = v;
+        this._height = floor(this._width / this.ar);
+        canvasWidthLabel.innerHTML = `${this._width}`;
+        canvasHeightLabel.innerHTML = `${this._height}`;
+        this.resetImage();
+    }
+    get height() {
+        return this._height;
+    }
+    set height(v) {
+        this._height = floor(v);
+        this._width = floor(this._height * this.ar);
+        canvasWidthLabel.innerHTML = `${this._width}`;
+        canvasHeightLabel.innerHTML = `${this._height}`;
+        this.resetImage();
+    }
+    constructor(renderer, width) {
+        this.renderer = renderer;
+        this.renderer.imageSmoothingEnabled = false;
+        this.ctx = document.createElement("canvas").getContext("2d");
+        this.ctx.lineWidth = 1;
+        this.renderer.lineWidth = 1;
+        this.ar =
+            this.renderer.canvas.getBoundingClientRect().width /
+                this.renderer.canvas.getBoundingClientRect().height;
+        this._width = width;
+        this._height = floor(this._width / this.ar);
+        this.width = width;
+        this.image = this.ctx.createImageData(this.width, this.height);
+        this.drawImageData();
+    }
+    drawSegment(x1, y1, x2, y2, color) {
+        this.ctx.putImageData(this.image, 0, 0);
+        this.ctx.strokeStyle = color;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1, y1);
+        this.ctx.lineTo(x2, y2);
+        this.ctx.closePath();
+        this.ctx.stroke();
+        this.image = this.ctx.getImageData(0, 0, this.width, this.height);
+        this.drawImageData();
+    }
+    getBuf() {
+        return this.image;
+    }
+    getNewBuf() {
+        return this.ctx.createImageData(this.width, this.height);
+    }
+    putImageData(img) {
+        this.image = img;
+        this.drawImageData();
+    }
+    addImageData(img) {
+        sumImageData(this.image, img);
+        this.drawImageData();
+    }
+    drawImageData() {
+        this.renderer.clearRect(0, 0, this.renderer.canvas.width, this.renderer.canvas.height);
+        this.ctx.putImageData(this.image, 0, 0);
+        this.renderer.drawImage(this.ctx.canvas, 0, 0, this.width * this.getPixelSize(), floor(this.height) * this.getPixelSize());
+    }
+    resizeCtx() {
+        this.ctx.canvas.width = this.width;
+        this.ctx.canvas.height = this.height;
+    }
+    clearCtx() {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+    }
+    resetImage() {
+        this.ar =
+            this.renderer.canvas.getBoundingClientRect().width /
+                this.renderer.canvas.getBoundingClientRect().height;
+        this._height = this._width / this.ar;
+        this.resizeCtx();
+        this.clearCtx();
+        this.image = this.ctx.createImageData(this.width, this.height);
+        this.drawImageData();
+    }
+    getDocumentCoords(x, y) {
+        let documentStuff = this.renderer.canvas.getBoundingClientRect();
+        let baseX = documentStuff.x;
+        let baseY = documentStuff.y;
+        return {
+            x: baseX + (x / this.width) * documentStuff.width,
+            y: baseY + (y / this.height) * documentStuff.height,
+        };
+    }
+    getPixelSize() {
+        return this.renderer.canvas.getBoundingClientRect().width / this.width;
+    }
+}
+const main_canvas = document.querySelector("#main_canvas");
+main_canvas.width = main_canvas.getBoundingClientRect().width;
+main_canvas.height = main_canvas.getBoundingClientRect().height;
+const canvas = new Graphics(main_canvas.getContext("2d"), 300);
+//#endregion graphics
+//#region interact
+function movePtrs() {
+    let x1 = start_x_input.validateInput()
+        ? start_x_input.value(0, canvas.width - 1)
+        : 0;
+    let y1 = start_y_input.validateInput()
+        ? start_y_input.value(0, canvas.height - 1)
+        : 0;
+    let x2 = end_x_input.validateInput()
+        ? end_x_input.value(0, canvas.width - 1)
+        : 0;
+    let y2 = end_y_input.validateInput()
+        ? end_y_input.value(0, canvas.height - 1)
+        : 0;
+    let tmp1 = canvas.getDocumentCoords(x1, y1);
+    let tmp2 = canvas.getDocumentCoords(x2, y2);
+    let pixelsize = canvas.getPixelSize();
+    // pointer_x.style.width = `${pixelsize}px`;
+    // pointer_y.style.width = `${pixelsize}px`;
+    pointer_x.style.left = `${tmp1.x + pixelsize / 2 - 15 / 2}px`;
+    pointer_x.style.top = `${tmp1.y + pixelsize / 2 - 15 / 2}px`;
+    pointer_y.style.left = `${tmp2.x + pixelsize / 2 - 15 / 2}px`;
+    pointer_y.style.top = `${tmp2.y + pixelsize / 2 - 15 / 2}px`;
+}
+input_x1.addEventListener("keyup", () => {
+    movePtrs();
+});
+input_y1.addEventListener("keyup", () => {
+    movePtrs();
+});
+input_x2.addEventListener("keyup", () => {
+    movePtrs();
+});
+input_y2.addEventListener("keyup", () => {
+    movePtrs();
+});
+movePtrs();
+const algs = [DDA, BresenhamReal, BresenhamInt, BresenhamAntiAlias, Wu];
+const radiobuttons = document.querySelectorAll("input[type='radio']");
+function getChosenAlgIndex() {
+    let count = 0;
+    radiobuttons.forEach((button, i) => {
+        let bt = button;
+        if (bt.checked)
+            count = i;
+    });
+    return count;
+}
+button_draw_seg.addEventListener("click", () => {
+    let alg = getChosenAlgIndex();
+    if (!start_x_input.validateInput())
+        return out.error(`Ошибка ввода координаты x начальной точки`);
+    if (!start_y_input.validateInput())
+        return out.error(`Ошибка ввода координаты y начальной точки`);
+    if (!end_x_input.validateInput())
+        return out.error(`Ошибка ввода координаты x конечной точки`);
+    if (!end_y_input.validateInput())
+        return out.error(`Ошибка ввода координаты y конечной точки`);
+    if (alg == 0)
+        return canvas.drawSegment(start_x_input.value(), start_y_input.value(), end_x_input.value(), end_y_input.value(), color_input.value());
+    else {
+        algs[alg - 1].draw(canvas.getBuf(), start_x_input.value(), start_y_input.value(), end_x_input.value(), end_y_input.value(), HEXtoRGB(color_input.value()));
+        canvas.drawImageData();
+    }
+});
+button_side.addEventListener("click", () => {
+    if (!side_input.validateInput())
+        return out.error("Ошибка ввода ширины холста");
+    canvas.width = side_input.value();
+    movePtrs();
+});

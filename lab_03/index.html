@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <title>ЛР3</title>
+  </head>
+  <body>
+    <div class="main">
+      <div class="inputs">
+        <div class="verbal">
+          <div>Координаты концов отрезка</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="start-x"
+              class="texinput"
+              placeholder="x нач"
+            />
+            <input
+              type="text"
+              name=""
+              id="start-y"
+              class="texinput"
+              placeholder="y нач"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="end-x"
+              class="texinput"
+              placeholder="x кон"
+            />
+            <input
+              type="text"
+              name=""
+              id="end-y"
+              class="texinput"
+              placeholder="y кон"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Цвет</div>
+          <div class="row">
+            <input
+              type="color"
+              class="texinput"
+              placeholder="Цвет"
+              id="i-color"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="стандартный"
+              class="widebutton"
+              id="set_default_color"
+            />
+            <input
+              type="button"
+              value="цвет фона"
+              class="widebutton"
+              id="set_bg_color"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Выбор алгоритма</div>
+          <div class="radiobox">
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="libfunc"
+                class="radiobutton"
+                checked
+              />
+              <label class="radiotext" for="libfunc">
+                Библиотечная функция
+              </label>
+            </div>
+            <div class="radioitem">
+              <input type="radio" name="alg" id="DDA" class="radiobutton" />
+              <label class="radiotext" for="DDA">Алгоритм ЦДА</label>
+            </div>
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="BresReal"
+                class="radiobutton"
+              />
+              <label class="radiotext" for="BresReal">
+                Брезенхем с действительными данными
+              </label>
+            </div>
+            <div class="radioitem">
+              <input type="radio" name="alg" id="BresInt" class="radiobutton" />
+              <label class="radiotext" for="BresInt">
+                Брезенхем с целочисленными данными
+              </label>
+            </div>
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="BresSmooth"
+                class="radiobutton"
+              />
+              <label class="radiotext" for="BresSmooth">
+                Брезенхем с устр. ступенчатости
+              </label>
+            </div>
+            <div class="radioitem">
+              <input type="radio" name="alg" id="Wu" class="radiobutton" />
+              <label class="radiotext" for="Wu"> Алгоритм Ву </label>
+            </div>
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Построить отрезок"
+              class="widebutton"
+              id="draw_segment"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Гистограмма скорости работы</div>
+          <div class="row">
+            <input type="button" value="Рассчитать" class="widebutton" />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Графики ступенчатости</div>
+          <div class="row">
+            <input type="button" value="Построить" class="widebutton" />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Очистка холста</div>
+          <div class="row">
+            <input
+              type="button"
+              value="Очистить"
+              id="clearall"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Ширина холста в пикселях</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="i-side-length"
+              placeholder="Ширина в пикселях"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Задать"
+              class="widebutton"
+              id="set_width"
+            />
+          </div>
+        </div>
+        <div class="verbal" style="border: none">
+          Размеры холста:
+          <span class="c-width">N/A</span>
+          x
+          <span class="c-height">N/A</span>
+        </div>
+      </div>
+      <div class="container">
+        <div class="pointer" id="pointer-x"></div>
+        <div class="pointer" id="pointer-y"></div>
+        <canvas id="main_canvas"> </canvas>
+      </div>
+      <div class="graphs">
+        <div class="hist">
+          <div>Гистограмма времени построения отрезка</div>
+          <canvas class="hist"></canvas>
+          <canvas class="hist-legend"></canvas>
+        </div>
+        <div class="graph">
+          <div>График кол-ва ступенек от угла</div>
+          <canvas class="graph-amount"></canvas>
+        </div>
+        <div class="graph">
+          <div>График длины наибольшей ступеньки</div>
+          <canvas class="graph_length"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <input
+        type="button"
+        value="очистить"
+        id="clearout"
+        class="button clearout"
+      />
+      <input
+        type="button"
+        value="смена темы"
+        id="themechange"
+        class="button themechange"
+      />
+      <div class="footertext"></div>
+    </div>
+    <script src="./script/app.js"></script>
+  </body>
+</html>
