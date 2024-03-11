@@ -31,7 +31,7 @@ change_theme.addEventListener("click", () => {
             node.classList.remove("dark");
         }
 });
-// change_theme.click();
+change_theme.click();
 class Output {
     constructor(node) {
         this.node = node;
@@ -126,6 +126,9 @@ const side_input = new NumberInput(input_side);
 const button_side = document.querySelector("#set_width");
 // const button_: HTMLInputElement = document.querySelector("#")!;
 const button_draw_seg = document.querySelector("#draw_segment");
+const button_clear_image = document.querySelector("#clear-image");
+const button_build_hist = document.querySelector("#build-hist");
+const button_build_graphs = document.querySelector("#build_graphs");
 //#endregion inputs
 //#region algs
 function fpart(x) {
@@ -152,7 +155,7 @@ function HEXtoRGB(s) {
     };
 }
 class LineAlg {
-    static draw(dst, x1, y1, x2, y2, color) {
+    static draw(dst, x1, y1, x2, y2, color, profiling = false) {
         return;
     }
     static countSteps(x1, y1, x2, y2) {
@@ -162,6 +165,10 @@ class LineAlg {
         return 0;
     }
     static setPixel(buf, x, y, color, alpha) {
+        if (x < 0 || x >= buf.width)
+            return;
+        if (y < 0 || y >= buf.height)
+            return;
         let tmp = (round(x) + round(y) * buf.width) * 4;
         buf.data[tmp] = color.r;
         buf.data[tmp + 1] = color.g;
@@ -170,8 +177,9 @@ class LineAlg {
     }
 }
 class DDA extends LineAlg {
-    static draw(dst, x1, y1, x2, y2, color) {
-        out.log("Работает Алгоритм ЦДА");
+    static draw(dst, x1, y1, x2, y2, color, profiling = false) {
+        if (!profiling)
+            out.log("Работает Алгоритм ЦДА");
         if (x1 == x2 && y1 == y2)
             return this.setPixel(dst, x1, y1, color, 255);
         let l = max(abs(x2 - x1), abs(y2 - y1));
@@ -180,7 +188,8 @@ class DDA extends LineAlg {
         let x = x1;
         let y = y1;
         for (let i = 0; i <= l; ++i) {
-            this.setPixel(dst, x, y, color, 255);
+            if (!profiling)
+                this.setPixel(dst, x, y, color, 255);
             x += dx;
             y += dy;
         }
@@ -268,8 +277,9 @@ class DDA extends LineAlg {
     }
 }
 class BresenhamReal extends LineAlg {
-    static draw(dst, x1, y1, x2, y2, color) {
-        out.log("Работает Алгоритм Брезенхема на действ. числах");
+    static draw(dst, x1, y1, x2, y2, color, profiling = false) {
+        if (!profiling)
+            out.log("Работает Алгоритм Брезенхема на действ. числах");
         // Проверка вырожденности	отрезка.
         // Если	отрезок вырожденный, то высвечивается точка и осуществляется выход.
         if (x1 == x2 && y1 == y2)
@@ -309,7 +319,8 @@ class BresenhamReal extends LineAlg {
         let y = y1;
         for (let i = 0; i < dx + 1; ++i) {
             // Высвечивание точки с координатами (X,Y).
-            this.setPixel(dst, x, y, color, 255);
+            if (!profiling)
+                this.setPixel(dst, x, y, color, 255);
             // Вычисление координат и ошибки для следующего пиксела:
             if (f >= 0) {
                 if (swapflag)
@@ -441,47 +452,48 @@ class BresenhamReal extends LineAlg {
             }
             f += tan_abs;
         }
+        maxsteplen = max(maxsteplen, steplen);
         return maxsteplen;
     }
 }
 class BresenhamInt extends LineAlg {
-    static draw(dst, x1, y1, x2, y2, color) {
-        out.log("Работает Целочисленный Алгоритм Брезенхема");
+    static draw(dst, x1, y1, x2, y2, color, profiling = false) {
+        if (!profiling)
+            out.log("Работает Целочисленный Алгоритм Брезенхема");
         if (x1 == x2 && y1 == y2)
             return this.setPixel(dst, x1, y1, color, 255);
         let dx = x2 - x1;
         let dy = y2 - y1;
         let sx = Math.sign(dx);
         let sy = Math.sign(dy);
-        dx = abs(dx);
-        dy = abs(dy);
-        let f = 0;
-        if (dx > dy)
-            f = 2 * dy - dx;
-        else
-            f = 2 * dx - dy;
-        let y = y1;
-        let x = x1;
-        if (dx > dy)
-            for (let xr of range(x1, x2)) {
-                let xx = +xr;
-                this.setPixel(dst, xx, y, color, 255);
-                if (f > 0) {
-                    y += sy;
-                    f -= 2 * dx;
-                }
-                f += 2 * dy;
-            }
-        else
-            for (let yr of range(y1, y2)) {
-                let yy = +yr;
-                this.setPixel(dst, x, yy, color, 255);
-                if (f > 0) {
+        dx = floor(abs(dx));
+        dy = floor(abs(dy));
+        let steep = false;
+        if (dy > dx) {
+            steep = true;
+            let buf = dx;
+            dx = dy;
+            dy = buf;
+        }
+        let f = floor(2 * dy - dx);
+        let x = round(x1);
+        let y = round(y1);
+        for (let i = 1; i <= dx + 1; ++i) {
+            if (!profiling)
+                this.setPixel(dst, x, y, color, 255);
+            while (f >= 0) {
+                if (steep)
                     x += sx;
-                    f -= 2 * dy;
-                }
-                f += 2 * dx;
+                else
+                    y += sy;
+                f -= 2 * dx;
             }
+            if (steep)
+                y += sy;
+            else
+                x += sx;
+            f += 2 * dy;
+        }
     }
     static countSteps(x1, y1, x2, y2) {
         if (x1 == x2 && y1 == y2)
@@ -597,12 +609,14 @@ class BresenhamInt extends LineAlg {
             }
             f += 2 * dy;
         }
+        maxsteplen = max(maxsteplen, steplen);
         return maxsteplen;
     }
 }
 class BresenhamAntiAlias extends LineAlg {
-    static draw(dst, x1, y1, x2, y2, color) {
-        out.log("Работает Алгоритм Брезенхема с устранением ступенчатости");
+    static draw(dst, x1, y1, x2, y2, color, profiling = false) {
+        if (!profiling)
+            out.log("Работает Алгоритм Брезенхема с устранением ступенчатости");
         if (x1 == x2 && y1 == y2)
             return this.setPixel(dst, x1, y1, color, 255);
         let I = 255;
@@ -642,7 +656,8 @@ class BresenhamAntiAlias extends LineAlg {
                 y += sY;
                 f = f - W;
             }
-            this.setPixel(dst, x, y, color, round(f));
+            if (!profiling)
+                this.setPixel(dst, x, y, color, round(f));
         }
     }
     static countSteps(x1, y1, x2, y2) {
@@ -653,8 +668,9 @@ class BresenhamAntiAlias extends LineAlg {
     }
 }
 class Wu extends LineAlg {
-    static draw(dst, x1, y1, x2, y2, color) {
-        out.log("Работает Алгоритм Ву");
+    static draw(dst, x1, y1, x2, y2, color, profiling = false) {
+        if (!profiling)
+            out.log("Работает Алгоритм Ву");
         let steep = abs(y2 - y1) > abs(x2 - x1);
         if (steep) {
             let buf = x1;
@@ -706,17 +722,30 @@ class Wu extends LineAlg {
             this.setPixel(dst, xpx2, ypx2, color, rfpart(yend) * xgap * 255);
             this.setPixel(dst, xpx2, ypx2 + 1, color, fpart(yend) * xgap * 255);
         }
+        let sx = Math.sign(xpx2 - xpx1);
         if (steep) {
-            for (let x of range(xpx1 + 1, xpx2)) {
-                this.setPixel(dst, floor(intersectY), x, color, rfpart(intersectY) * 255);
-                this.setPixel(dst, floor(intersectY) + 1, x, color, fpart(intersectY) * 255);
+            for (let x = xpx1 + 1; x != xpx2; x += sx) {
+                if (!profiling) {
+                    this.setPixel(dst, floor(intersectY), x, color, rfpart(intersectY) * 255);
+                    this.setPixel(dst, floor(intersectY) + 1, x, color, fpart(intersectY) * 255);
+                }
+                else {
+                    floor(intersectY);
+                    fpart(intersectY);
+                }
                 intersectY += gradient;
             }
         }
         else {
-            for (let x of range(xpx1 + 1, xpx2)) {
-                this.setPixel(dst, x, floor(intersectY), color, rfpart(intersectY) * 255);
-                this.setPixel(dst, x, floor(intersectY) + 1, color, fpart(intersectY) * 255);
+            for (let x = xpx1 + 1; x != xpx2; x += sx) {
+                if (!profiling) {
+                    this.setPixel(dst, x, floor(intersectY), color, rfpart(intersectY) * 255);
+                    this.setPixel(dst, x, floor(intersectY) + 1, color, fpart(intersectY) * 255);
+                }
+                else {
+                    floor(intersectY);
+                    fpart(intersectY);
+                }
                 intersectY += gradient;
             }
         }
@@ -927,25 +956,25 @@ class Graphics {
 const main_canvas = document.querySelector("#main_canvas");
 main_canvas.width = main_canvas.getBoundingClientRect().width;
 main_canvas.height = main_canvas.getBoundingClientRect().height;
-const canvas = new Graphics(main_canvas.getContext("2d"), 300);
+const main_canv = new Graphics(main_canvas.getContext("2d"), 300);
 //#endregion graphics
 //#region interact
 function movePtrs() {
     let x1 = start_x_input.validateInput()
-        ? start_x_input.value(0, canvas.width - 1)
+        ? start_x_input.value(0, main_canv.width - 1)
         : 0;
     let y1 = start_y_input.validateInput()
-        ? start_y_input.value(0, canvas.height - 1)
+        ? start_y_input.value(0, main_canv.height - 1)
         : 0;
     let x2 = end_x_input.validateInput()
-        ? end_x_input.value(0, canvas.width - 1)
+        ? end_x_input.value(0, main_canv.width - 1)
         : 0;
     let y2 = end_y_input.validateInput()
-        ? end_y_input.value(0, canvas.height - 1)
+        ? end_y_input.value(0, main_canv.height - 1)
         : 0;
-    let tmp1 = canvas.getDocumentCoords(x1, y1);
-    let tmp2 = canvas.getDocumentCoords(x2, y2);
-    let pixelsize = canvas.getPixelSize();
+    let tmp1 = main_canv.getDocumentCoords(x1, y1);
+    let tmp2 = main_canv.getDocumentCoords(x2, y2);
+    let pixelsize = main_canv.getPixelSize();
     // pointer_x.style.width = `${pixelsize}px`;
     // pointer_y.style.width = `${pixelsize}px`;
     pointer_x.style.left = `${tmp1.x + pixelsize / 2 - 15 / 2}px`;
@@ -988,15 +1017,179 @@ button_draw_seg.addEventListener("click", () => {
     if (!end_y_input.validateInput())
         return out.error(`Ошибка ввода координаты y конечной точки`);
     if (alg == 0)
-        return canvas.drawSegment(start_x_input.value(), start_y_input.value(), end_x_input.value(), end_y_input.value(), color_input.value());
+        return main_canv.drawSegment(start_x_input.value(), start_y_input.value(), end_x_input.value(), end_y_input.value(), color_input.value());
     else {
-        algs[alg - 1].draw(canvas.getBuf(), start_x_input.value(), start_y_input.value(), end_x_input.value(), end_y_input.value(), HEXtoRGB(color_input.value()));
-        canvas.drawImageData();
+        algs[alg - 1].draw(main_canv.getBuf(), start_x_input.value(), start_y_input.value(), end_x_input.value(), end_y_input.value(), HEXtoRGB(color_input.value()));
+        main_canv.drawImageData();
     }
 });
 button_side.addEventListener("click", () => {
     if (!side_input.validateInput())
         return out.error("Ошибка ввода ширины холста");
-    canvas.width = side_input.value();
+    if (side_input.value() < 10)
+        return out.error("Нельзя ввести ширину холста меньше 10 пикселей");
+    main_canv.width = side_input.value();
     movePtrs();
+});
+button_clear_image.addEventListener("click", () => {
+    main_canv.resetImage();
+});
+//#endregion
+//#region histogram
+const measure_canvas = document.createElement("canvas");
+measure_canvas.width = 10000;
+measure_canvas.height = 10000;
+const measure_ctx = measure_canvas.getContext("2d");
+const hist_canvas = document.querySelector("#hist");
+let hist_chart = undefined;
+function buildTimeChart() {
+    if (!start_x_input.validateInput())
+        return out.error(`Ошибка ввода координаты x начальной точки`);
+    if (!start_y_input.validateInput())
+        return out.error(`Ошибка ввода координаты y начальной точки`);
+    if (!end_x_input.validateInput())
+        return out.error(`Ошибка ввода координаты x конечной точки`);
+    if (!end_y_input.validateInput())
+        return out.error(`Ошибка ввода координаты y конечной точки`);
+    let x1 = start_x_input.value();
+    let y1 = start_y_input.value();
+    let x2 = end_x_input.value();
+    let y2 = end_y_input.value();
+    let times = [];
+    let t1 = performance.now();
+    measure_ctx.beginPath();
+    measure_ctx.moveTo(x1, y1);
+    measure_ctx.lineTo(x2, y2);
+    measure_ctx.stroke();
+    measure_ctx.closePath();
+    let t2 = performance.now();
+    console.log(t2 - t1);
+    times.push(1);
+    let buf = measure_ctx.createImageData(main_canv.width, main_canv.height);
+    for (let alg of algs) {
+        t1 = window.performance.now();
+        alg.draw(buf, x1, y1, x2, y2, { r: 255, g: 0, b: 0 }, true);
+        t2 = window.performance.now();
+        times.push(t2 - t1);
+    }
+    // @ts-ignore
+    if (hist_chart !== undefined)
+        hist_chart.destroy();
+    // @ts-ignore
+    hist_chart = new Chart(hist_canvas, {
+        type: "bar",
+        data: {
+            labels: [
+                "Библ.",
+                "ЦДА",
+                "Брез.\nдейств.",
+                "Брез.\nцел.",
+                "Брез.\nступ.",
+                "Ву",
+            ],
+            datasets: [
+                {
+                    label: "время выполнения алгоритма в мс",
+                    data: times,
+                    backgroundColor: [
+                        "#f7258522",
+                        "#b5179e22",
+                        "#7209b722",
+                        "#560bad22",
+                        "#480ca822",
+                        "#3a0ca322",
+                    ],
+                    borderColor: [
+                        "#f72585FF",
+                        "#b5179eFF",
+                        "#7209b7FF",
+                        "#560badFF",
+                        "#480ca8FF",
+                        "#3a0ca3FF",
+                    ],
+                    borderWidth: 1,
+                },
+            ],
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                },
+            },
+        },
+    });
+}
+button_build_hist.addEventListener("click", () => {
+    buildTimeChart();
+});
+function toRad(angle_deg) {
+    return (angle_deg / 180) * Math.PI;
+}
+const amount_canvas = document.querySelector("#graph-amount");
+const length_canvas = document.querySelector("#graph-length");
+let stepcount_chart = undefined;
+let steplen_chart = undefined;
+function buildStatGraphs() {
+    const len = 100;
+    let algIndex = getChosenAlgIndex();
+    if (algIndex == 0)
+        return out.error("Измерение статистики библиотечной функции не поддерживается");
+    let alg = algs[algIndex - 1];
+    let x1 = 0;
+    let y1 = 0;
+    let angles = [];
+    let stepcounts = [];
+    let steplens = [];
+    for (let i = 0; i <= 45; ++i) {
+        angles.push(i);
+        let a = toRad(i);
+        let x2 = len * Math.cos(a);
+        let y2 = len * Math.sin(a);
+        stepcounts.push(alg.countSteps(x1, y1, x2, y2));
+        steplens.push(alg.measureStep(x1, y1, x2, y2));
+    }
+    if (stepcount_chart != undefined)
+        // @ts-ignore
+        stepcount_chart.destroy();
+    if (steplen_chart != undefined)
+        // @ts-ignore
+        steplen_chart.destroy();
+    // @ts-ignore
+    stepcount_chart = new Chart(amount_canvas, {
+        type: "line",
+        data: {
+            labels: angles,
+            datasets: [
+                {
+                    label: "количество ступенек в зависимости от угла",
+                    data: stepcounts,
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                },
+            ],
+        },
+    });
+    // @ts-ignore
+    steplen_chart = new Chart(length_canvas, {
+        type: "line",
+        data: {
+            labels: angles,
+            datasets: [
+                {
+                    label: "длина наибольшей ступеньки в зависимости от угла",
+                    data: steplens,
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                },
+            ],
+        },
+    });
+}
+button_build_graphs.addEventListener("click", () => {
+    buildStatGraphs();
 });

@@ -298,17 +298,29 @@ body {
   align-items: center;
   justify-content: space-between;
 
-  .hist,
   .graph {
     flex: 1;
     width: 100%;
     text-align: center;
-  }
-
-  .graph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: baseline;
     border-top: 1px $font-color solid;
     &.dark {
       border-top: 1px $font-color-dark solid;
+    }
+
+    .canvas-container {
+      display: block;
+      flex: 1;
+      flex-grow: 1;
+      width: inherit;
+      canvas {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
     }
   }
 }
