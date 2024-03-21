@@ -5,8 +5,11 @@ const round = Math.round;
 const max = Math.max;
 const abs = Math.abs;
 
-let DEBUG = false;
-let EPS = 1e-6;
+const ANGLE_FROM = 0;
+const ANGLE_TO = 90;
+const DEBUG = true;
+const EPS = 1e-6;
+
 let dark = false;
 
 function range(start: number, end: number) {
@@ -270,7 +273,7 @@ class DDA extends LineAlg {
     let y = y1;
 
     for (let i = 0; i <= l; ++i) {
-      if (!profiling) this.setPixel(dst, x, y, color, 255);
+      this.setPixel(dst, x, y, color, 255);
       x += dx;
       y += dy;
     }
@@ -423,7 +426,7 @@ class BresenhamReal extends LineAlg {
 
     for (let i = 0; i < dx + 1; ++i) {
       // Высвечивание точки с координатами (X,Y).
-      if (!profiling) this.setPixel(dst, x, y, color, 255);
+      this.setPixel(dst, x, y, color, 255);
       // Вычисление координат и ошибки для следующего пиксела:
       if (f >= 0) {
         if (swapflag) x += sx;
@@ -601,7 +604,7 @@ class BresenhamInt extends LineAlg {
     let y = round(y1);
 
     for (let i = 1; i <= dx + 1; ++i) {
-      if (!profiling) this.setPixel(dst, x, y, color, 255);
+      if (!profiling || i % 3 == 0) this.setPixel(dst, x, y, color, 255);
       while (f >= 0) {
         if (steep) x += sx;
         else y += sy;
@@ -805,7 +808,7 @@ class BresenhamAntiAlias extends LineAlg {
         f = f - W;
       }
 
-      if (!profiling) this.setPixel(dst, x, y, color, round(f));
+      this.setPixel(dst, x, y, color, round(f));
     }
   }
 
@@ -894,49 +897,39 @@ class Wu extends LineAlg {
 
     if (steep) {
       for (let x = xpx1 + 1; x != xpx2; x += sx) {
-        if (!profiling) {
-          this.setPixel(
-            dst,
-            floor(intersectY),
-            x,
-            color,
-            rfpart(intersectY) * 255
-          );
-          this.setPixel(
-            dst,
-            floor(intersectY) + 1,
-            x,
-            color,
-            fpart(intersectY) * 255
-          );
-        } else {
-          floor(intersectY);
-          fpart(intersectY);
-        }
+        this.setPixel(
+          dst,
+          floor(intersectY),
+          x,
+          color,
+          rfpart(intersectY) * 255
+        );
+        this.setPixel(
+          dst,
+          floor(intersectY) + 1,
+          x,
+          color,
+          fpart(intersectY) * 255
+        );
 
         intersectY += gradient;
       }
     } else {
       for (let x = xpx1 + 1; x != xpx2; x += sx) {
-        if (!profiling) {
-          this.setPixel(
-            dst,
-            x,
-            floor(intersectY),
-            color,
-            rfpart(intersectY) * 255
-          );
-          this.setPixel(
-            dst,
-            x,
-            floor(intersectY) + 1,
-            color,
-            fpart(intersectY) * 255
-          );
-        } else {
-          floor(intersectY);
-          fpart(intersectY);
-        }
+        this.setPixel(
+          dst,
+          x,
+          floor(intersectY),
+          color,
+          rfpart(intersectY) * 255
+        );
+        this.setPixel(
+          dst,
+          x,
+          floor(intersectY) + 1,
+          color,
+          fpart(intersectY) * 255
+        );
 
         intersectY += gradient;
       }
@@ -1384,7 +1377,7 @@ button_build_sun.addEventListener("click", () => {
 
 //#endregion
 
-//#region histogram
+//#region graphs
 
 const measure_canvas: HTMLCanvasElement = document.createElement("canvas");
 measure_canvas.width = 10000;
@@ -1514,7 +1507,7 @@ function buildStatGraphs() {
   let stepcounts: number[] = [];
   let steplens: number[] = [];
 
-  for (let i = 0; i <= 45; ++i) {
+  for (let i = ANGLE_FROM; i <= ANGLE_TO; ++i) {
     angles.push(i);
     let a = toRad(i);
     let x2 = len * Math.cos(a);
