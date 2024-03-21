@@ -5,9 +5,10 @@ const round = Math.round;
 const max = Math.max;
 const abs = Math.abs;
 
+const RUN_COUNT = 1e5;
 const ANGLE_FROM = 0;
 const ANGLE_TO = 90;
-const DEBUG = true;
+const DEBUG = false;
 const EPS = 1e-6;
 
 let dark = false;
@@ -384,6 +385,9 @@ class BresenhamReal extends LineAlg {
     // Если	отрезок вырожденный, то высвечивается точка и осуществляется выход.
     if (x1 == x2 && y1 == y2) return this.setPixel(dst, x1, y1, color, 255);
 
+    let x = x1;
+    let y = y1;
+
     // Вычисление приращений  dX=Xк-Xн и  dY=Yк-Yн.
     let dx = x2 - x1;
     let dy = y2 - y1;
@@ -397,7 +401,6 @@ class BresenhamReal extends LineAlg {
     dy = abs(dy);
 
     // Вычисление модуля тангенса угла наклона отрезка: m = dY/dX.
-    let tan_abs = dy / dx;
 
     // Анализ вычисленного значения m и обмен местами dX и dY при m>1:
     //      если m>1, то выполнить
@@ -407,36 +410,35 @@ class BresenhamReal extends LineAlg {
     //      m=1/m,
     //      fl=1;
     //      если m<1, то fl=0
-    let swapflag = false;
-    if (tan_abs > 1) {
+    let steep = false;
+    if (dy > dx) {
+      steep = true;
+
       let buf = dx;
       dx = dy;
       dy = buf;
-      tan_abs = 1 / tan_abs;
-      swapflag = true;
     }
+
+    let tan_abs = dy / dx;
 
     // Инициализация начального значения ошибки: f=m-0,5
     let f = tan_abs - 0.5;
 
     //  Инициализация начальных значений координат текущего пиксела:
     //  X=Xн, Y=Yн
-    let x = x1;
-    let y = y1;
 
-    for (let i = 0; i < dx + 1; ++i) {
-      // Высвечивание точки с координатами (X,Y).
-      this.setPixel(dst, x, y, color, 255);
-      // Вычисление координат и ошибки для следующего пиксела:
+    for (let i = 0; i < dx; ++i) {
+      if (!profiling) this.setPixel(dst, x, y, color, 255);
+
       if (f >= 0) {
-        if (swapflag) x += sx;
+        if (steep) x += sx;
         else y += sy;
+
         f -= 1;
       }
-      if (f < 0) {
-        if (swapflag) y += sy;
-        else x += sx;
-      }
+
+      if (steep) y += sy;
+      else x += sx;
       f += tan_abs;
     }
   }
@@ -581,14 +583,17 @@ class BresenhamInt extends LineAlg {
     if (!profiling) out.log("Работает Целочисленный Алгоритм Брезенхема");
     if (x1 == x2 && y1 == y2) return this.setPixel(dst, x1, y1, color, 255);
 
+    let x = x1;
+    let y = y1;
+
     let dx = x2 - x1;
     let dy = y2 - y1;
 
     let sx = Math.sign(dx);
     let sy = Math.sign(dy);
 
-    dx = floor(abs(dx));
-    dy = floor(abs(dy));
+    dx = abs(dx);
+    dy = abs(dy);
 
     let steep = false;
     if (dy > dx) {
@@ -598,22 +603,20 @@ class BresenhamInt extends LineAlg {
       dy = buf;
     }
 
-    let f = floor(2 * dy - dx);
+    let f = 2 * dy - dx;
 
-    let x = round(x1);
-    let y = round(y1);
+    for (let i = 0; i < dx; ++i) {
+      if (!profiling) this.setPixel(dst, x, y, color, 255);
 
-    for (let i = 1; i <= dx + 1; ++i) {
-      if (!profiling || i % 3 == 0) this.setPixel(dst, x, y, color, 255);
-      while (f >= 0) {
+      if (f >= 0) {
         if (steep) x += sx;
         else y += sy;
+
         f -= 2 * dx;
       }
 
       if (steep) y += sy;
       else x += sx;
-
       f += 2 * dy;
     }
   }
@@ -770,45 +773,32 @@ class BresenhamAntiAlias extends LineAlg {
     dX = abs(dX);
     dY = abs(dY);
 
-    let m = dY / dX;
-
-    let swapped = false;
-    if (m > 1) {
+    let steep = false;
+    if (dY > dX) {
+      steep = true;
       let buf = dX;
       dX = dY;
       dY = buf;
-      m = 1 / m;
-      swapped = true;
     }
-    m = m * I;
 
-    let f = I / 2;
-    let W = I - m;
+    let m = (I * dY) / dX;
+    let w = I - m;
+    let e = 0.5 * I;
 
-    let x = round(x1);
-    let y = round(y1);
+    let x = x1;
+    let y = y1;
 
-    x2 = round(x2);
-    y2 = round(y2);
-
-    this.setPixel(dst, x, y, color, round(f));
-    while (x != round(x2) || y != round(y2)) {
-      if (sX < 0 && x < x2) return out.error(`Выход по ошибке`);
-      if (sX > 0 && x > x2) return out.error(`Выход по ошибке`);
-      if (sY < 0 && y < y2) return out.error(`Выход по ошибке`);
-      if (sY > 0 && y > y2) return out.error(`Выход по ошибке`);
-
-      if (f <= W) {
-        if (swapped) y += sY;
-        else x += sX;
-        f += m;
-      } else if (f > W) {
+    for (let i = 0; i < dX; ++i) {
+      this.setPixel(dst, x, y, color, round(e));
+      if (e < w) {
+        if (!steep) x += sX;
+        else y += sY;
+        e = e + m;
+      } else {
         x += sX;
         y += sY;
-        f = f - W;
+        e -= w;
       }
-
-      this.setPixel(dst, x, y, color, round(f));
     }
   }
 
@@ -832,6 +822,10 @@ class Wu extends LineAlg {
     profiling = false
   ): void {
     if (!profiling) out.log("Работает Алгоритм Ву");
+
+    if (abs(x1 - x2) < EPS && abs(y1 - y2) < EPS)
+      return this.setPixel(dst, x1, y1, color, 255);
+
     let steep: boolean = abs(y2 - y1) > abs(x2 - x1);
 
     if (steep) {
@@ -1405,11 +1399,13 @@ function buildTimeChart() {
   let times: number[] = [];
 
   let t1 = performance.now();
-  measure_ctx.beginPath();
-  measure_ctx.moveTo(x1, y1);
-  measure_ctx.lineTo(x2, y2);
-  measure_ctx.stroke();
-  measure_ctx.closePath();
+  for (let i = 0; i < RUN_COUNT; ++i) {
+    measure_ctx.beginPath();
+    measure_ctx.moveTo(x1, y1);
+    measure_ctx.lineTo(x2, y2);
+    measure_ctx.stroke();
+    measure_ctx.closePath();
+  }
   let t2 = performance.now();
 
   console.log(t2 - t1);
@@ -1420,7 +1416,9 @@ function buildTimeChart() {
 
   for (let alg of algs) {
     t1 = window.performance.now();
-    alg.draw(buf, x1, y1, x2, y2, { r: 255, g: 0, b: 0 }, true);
+    for (let i = 0; i < RUN_COUNT; ++i) {
+      alg.draw(buf, x1, y1, x2, y2, { r: 255, g: 0, b: 0 }, true);
+    }
     t2 = window.performance.now();
     times.push(t2 - t1);
   }
