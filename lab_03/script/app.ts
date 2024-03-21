@@ -5,7 +5,7 @@ const round = Math.round;
 const max = Math.max;
 const abs = Math.abs;
 
-let DEBUG = true;
+let DEBUG = false;
 let EPS = 1e-6;
 let dark = false;
 
@@ -149,6 +149,9 @@ const start_y_input: NumberInput = new NumberInput(input_y1);
 const end_x_input: NumberInput = new NumberInput(input_x2);
 const end_y_input: NumberInput = new NumberInput(input_y2);
 
+const input_beams: HTMLInputElement = document.querySelector("#beam_amount")!;
+const sun_beams_input: NumberInput = new NumberInput(input_beams);
+
 // buttons
 const input_side: HTMLInputElement = document.querySelector("#i-side-length")!;
 const side_input: NumberInput = new NumberInput(input_side);
@@ -166,6 +169,8 @@ const button_build_hist: HTMLInputElement =
 
 const button_build_graphs: HTMLInputElement =
   document.querySelector("#build_graphs")!;
+
+const button_build_sun: HTMLInputElement = document.querySelector("#draw_sun")!;
 //#endregion inputs
 
 //#region algs
@@ -785,6 +790,11 @@ class BresenhamAntiAlias extends LineAlg {
 
     this.setPixel(dst, x, y, color, round(f));
     while (x != round(x2) || y != round(y2)) {
+      if (sX < 0 && x < x2) return out.error(`Выход по ошибке`);
+      if (sX > 0 && x > x2) return out.error(`Выход по ошибке`);
+      if (sY < 0 && y < y2) return out.error(`Выход по ошибке`);
+      if (sY > 0 && y > y2) return out.error(`Выход по ошибке`);
+
       if (f <= W) {
         if (swapped) y += sY;
         else x += sX;
@@ -1133,6 +1143,7 @@ class Graphics {
     this.ctx.putImageData(this.image, 0, 0);
 
     this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.moveTo(x1, y1);
     this.ctx.lineTo(x2, y2);
@@ -1326,6 +1337,49 @@ button_side.addEventListener("click", () => {
 
 button_clear_image.addEventListener("click", () => {
   main_canv.resetImage();
+});
+
+button_build_sun.addEventListener("click", () => {
+  let alg = getChosenAlgIndex();
+
+  if (!start_x_input.validateInput())
+    return out.error(`Ошибка ввода координаты x начальной точки`);
+  if (!start_y_input.validateInput())
+    return out.error(`Ошибка ввода координаты y начальной точки`);
+  if (!end_x_input.validateInput())
+    return out.error(`Ошибка ввода координаты x конечной точки`);
+  if (!end_y_input.validateInput())
+    return out.error(`Ошибка ввода координаты y конечной точки`);
+  if (!sun_beams_input.validateInput())
+    return out.error(`Ошибка ввода количества лучей солнышка`);
+  if (sun_beams_input.value() <= 0)
+    return out.error(`Ошибка - колчество лучшей солнышка слишком мало`);
+
+  let step = (Math.PI * 2) / sun_beams_input.value();
+
+  let x1 = start_x_input.value();
+  let y1 = start_y_input.value();
+  let x2 = end_x_input.value();
+  let y2 = end_y_input.value();
+  let color = color_input.value();
+  let rgbcolor = HEXtoRGB(color_input.value());
+  let angle_start = Math.atan2(y2 - y1, x2 - x1);
+  let len = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+
+  for (
+    let angle = angle_start;
+    angle <= Math.PI * 2 + angle_start;
+    angle += step
+  ) {
+    let endx = len * Math.cos(angle) + x1;
+    let endy = len * Math.sin(angle) + y1;
+
+    if (alg == 0) main_canv.drawSegment(x1, y1, endx, endy, color);
+    else {
+      algs[alg - 1].draw(main_canv.getBuf(), x1, y1, endx, endy, rgbcolor);
+      main_canv.drawImageData();
+    }
+  }
 });
 
 //#endregion

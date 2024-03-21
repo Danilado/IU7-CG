@@ -170,6 +170,10 @@ body {
         justify-content: space-around;
         flex: 1;
 
+        &.noflex {
+          display: block;
+        }
+
         &.dark {
           border-bottom: 1px solid $font-color-dark;
         }
