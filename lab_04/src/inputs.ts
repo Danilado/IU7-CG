@@ -6,6 +6,7 @@ export class NumberInput {
   }
 
   validateInput(minN: number = -Infinity, maxN: number = Infinity): boolean {
+    if (this.node.value == "") return false;
     let tmp = Number(this.node.value);
     if (Number.isNaN(tmp)) return false;
     if (tmp < minN) return false;
@@ -14,6 +15,7 @@ export class NumberInput {
   }
 
   value(minN: number = -Infinity, maxN: number = Infinity) {
+    if (this.node.value == "") return 0;
     let tmp = Number(this.node.value);
     if (Number.isNaN(tmp)) return tmp;
     if (tmp < minN) return minN;
@@ -73,58 +75,66 @@ export const ellipse_r_y_input: NumberInput = new NumberInput(ellipse_r_y);
 export const btn_build_ellipse: HTMLInputElement =
   document.querySelector("#build-ellipse")!;
 
-//#region circ-specter
+//#region circ-spectrum
 
-const circ_specter_r_start: HTMLInputElement =
-  document.querySelector("#circle-specter-r1")!;
-export const circ_specter_r_start_input: NumberInput = new NumberInput(
-  circ_specter_r_start
-);
-const circ_specter_r_end: HTMLInputElement =
-  document.querySelector("#circle-specter-r2")!;
-export const circ_specter_r_end_input: NumberInput = new NumberInput(
-  circ_specter_r_end
-);
-const circ_specter_r_step: HTMLInputElement = document.querySelector(
-  "#circle-specter-step"
+const circ_spectrum_r_start: HTMLInputElement = document.querySelector(
+  "#circle-spectrum-r1"
 )!;
-export const circ_specter_r_step_input: NumberInput = new NumberInput(
-  circ_specter_r_step
+export const circ_spectrum_r_start_input: NumberInput = new NumberInput(
+  circ_spectrum_r_start
 );
-const circ_specter_amount: HTMLInputElement = document.querySelector(
-  "#circle-specter-amount"
+const circ_spectrum_r_end: HTMLInputElement = document.querySelector(
+  "#circle-spectrum-r2"
 )!;
-export const circ_specter_amount_input: NumberInput = new NumberInput(
-  circ_specter_amount
+export const circ_spectrum_r_end_input: NumberInput = new NumberInput(
+  circ_spectrum_r_end
 );
-export const btn_build_circ_specter: HTMLInputElement = document.querySelector(
-  "#build-circle-specter"
+const circ_spectrum_r_step: HTMLInputElement = document.querySelector(
+  "#circle-spectrum-step"
+)!;
+export const circ_spectrum_r_step_input: NumberInput = new NumberInput(
+  circ_spectrum_r_step
+);
+const circ_spectrum_amount: HTMLInputElement = document.querySelector(
+  "#circle-spectrum-amount"
+)!;
+export const circ_spectrum_amount_input: NumberInput = new NumberInput(
+  circ_spectrum_amount
+);
+export const btn_build_circ_spectrum: HTMLInputElement = document.querySelector(
+  "#build-circle-spectrum"
 )!;
 
 //#endregion
 
-//#region ellipse-specter
+//#region ellipse-spectrum
 
-const el_specter_r_start: HTMLInputElement = document.querySelector(
-  "#ellipse-specter-r1"
+const el_spectrum_rx_start: HTMLInputElement = document.querySelector(
+  "#ellipse-spectrum-r1"
 )!;
-export const el_specter_r_start_input: NumberInput = new NumberInput(
-  el_specter_r_start
+export const el_spectrum_rx_start_input: NumberInput = new NumberInput(
+  el_spectrum_rx_start
 );
-const el_specter_r_end: HTMLInputElement = document.querySelector(
-  "#ellipse-specter-r2"
+const el_spectrum_ry_start: HTMLInputElement = document.querySelector(
+  "#ellipse-spectrum-r2"
 )!;
-export const el_specter_r_end_input: NumberInput = new NumberInput(
-  el_specter_r_end
+export const el_spectrum_ry_start_input: NumberInput = new NumberInput(
+  el_spectrum_ry_start
 );
-const el_specter_r_step: HTMLInputElement = document.querySelector(
-  "#ellipse-specter-step"
+const el_spectrum_r_step: HTMLInputElement = document.querySelector(
+  "#ellipse-spectrum-step"
 )!;
-export const el_specter_r_step_input: NumberInput = new NumberInput(
-  el_specter_r_step
+export const el_spectrum_r_step_input: NumberInput = new NumberInput(
+  el_spectrum_r_step
 );
-export const btn_build_el_specter: HTMLInputElement = document.querySelector(
-  "#build-ellipse-specter"
+const el_spectrum_r_amount: HTMLInputElement = document.querySelector(
+  "#ellipse-spectrum-amount"
+)!;
+export const el_spectrum_r_amount_input: NumberInput = new NumberInput(
+  el_spectrum_r_amount
+);
+export const btn_build_el_spectrum: HTMLInputElement = document.querySelector(
+  "#build-ellipse-spectrum"
 )!;
 
 //#endregion

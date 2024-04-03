@@ -16,8 +16,18 @@ import {
   btn_build_ellipse,
   ellipse_r_x_input,
   ellipse_r_y_input,
+  btn_build_circ_spectrum,
+  circ_spectrum_r_start_input,
+  circ_spectrum_r_end_input,
+  circ_spectrum_r_step_input,
+  circ_spectrum_amount_input,
+  btn_build_el_spectrum,
+  el_spectrum_rx_start_input,
+  el_spectrum_ry_start_input,
+  el_spectrum_r_step_input,
+  el_spectrum_r_amount_input,
 } from "./inputs";
-import { out } from "./constants";
+import { out, round } from "./constants";
 import { HEXtoRGB, RGBColor } from "./pixels";
 import {
   buildCircleCanonical,
@@ -97,14 +107,15 @@ btn_clear_image.addEventListener("click", () => {
   main_canv.resetImage();
 });
 
-btn_build_circle.addEventListener("click", () => {
+function buildCircleFromInputs() {
   if (!center_x_input.validateInput())
     return out.error(`Ошибка ввода кординаты x центра фигуры`);
   if (!center_y_input.validateInput())
     return out.error(`Ошибка ввода кординаты y центра фигуры`);
+  let r;
   if (!circle_r_input.validateInput())
     return out.error(`Ошибка ввода радиуса окружности`);
-  let r = circle_r_input.value();
+  r = circle_r_input.value();
   if (r < 0)
     return out.error(`Ошибка: Радиус окружности не может быть меньше нуля`);
 
@@ -121,21 +132,32 @@ btn_build_circle.addEventListener("click", () => {
     buf = main_canv.getBuf();
   }
 
-  switch (i) {
+  return buildCircle(buf!, cx, cy, r, i, i == 0 ? color : rgbc!);
+}
+
+function buildCircle(
+  buf: ImageData,
+  cx: number,
+  cy: number,
+  r: number,
+  alg: number,
+  color: RGBColor | string
+) {
+  switch (alg) {
     case 0:
-      main_canv.drawCircle(cx, cy, r, color);
+      main_canv.drawCircle(cx, cy, r, color as string);
       break;
     case 1:
-      buildCircleCanonical(buf!, cx, cy, r, rgbc!);
+      buildCircleCanonical(buf!, cx, cy, r, color as RGBColor);
       break;
     case 2:
-      buildCircleParametric(buf!, cx, cy, r, rgbc!);
+      buildCircleParametric(buf!, cx, cy, r, color as RGBColor);
       break;
     case 3:
-      buildCircleBresenham(buf!, cx, cy, r, rgbc!);
+      buildCircleBresenham(buf!, cx, cy, r, color as RGBColor);
       break;
     case 4:
-      buildCircleMidpoint(buf!, cx, cy, r, rgbc!);
+      buildCircleMidpoint(buf!, cx, cy, r, color as RGBColor);
       break;
     // case(0):{}break;
     default:
@@ -146,11 +168,14 @@ btn_build_circle.addEventListener("click", () => {
       }
       break;
   }
+}
 
-  if (i != 0) main_canv.drawImageData();
+btn_build_circle.addEventListener("click", () => {
+  buildCircleFromInputs();
+  main_canv.drawImageData();
 });
 
-btn_build_ellipse.addEventListener("click", () => {
+function buildEllipseFromInputs() {
   if (!center_x_input.validateInput())
     return out.error(`Ошибка ввода кординаты x центра фигуры`);
   if (!center_y_input.validateInput())
@@ -177,21 +202,33 @@ btn_build_ellipse.addEventListener("click", () => {
     buf = main_canv.getBuf();
   }
 
-  switch (i) {
+  buildEllipse(buf!, cx, cy, rx, ry, i, i == 0 ? color : rgbc!);
+}
+
+function buildEllipse(
+  buf: ImageData,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  alg: number,
+  color: RGBColor | string
+) {
+  switch (alg) {
     case 0:
-      main_canv.drawEllipse(cx, cy, rx, ry, color);
+      main_canv.drawEllipse(cx, cy, rx, ry, color as string);
       break;
     case 1:
-      buildEllipseCanonical(buf!, cx, cy, rx, ry, rgbc!, false);
+      buildEllipseCanonical(buf!, cx, cy, rx, ry, color as RGBColor);
       break;
     case 2:
-      buildEllipseParametric(buf!, cx, cy, rx, ry, rgbc!);
+      buildEllipseParametric(buf!, cx, cy, rx, ry, color as RGBColor);
       break;
     case 3:
-      buildEllipseBresenham(buf!, cx, cy, rx, ry, rgbc!);
+      buildEllipseBresenham(buf!, cx, cy, rx, ry, color as RGBColor);
       break;
     case 4:
-      buildEllipseMidpoint(buf!, cx, cy, rx, ry, rgbc!);
+      buildEllipseMidpoint(buf!, cx, cy, rx, ry, color as RGBColor);
       break;
     // case(0):{}break;
     default:
@@ -202,198 +239,170 @@ btn_build_ellipse.addEventListener("click", () => {
       }
       break;
   }
+}
 
-  if (i != 0) main_canv.drawImageData();
+btn_build_ellipse.addEventListener("click", () => {
+  buildEllipseFromInputs();
+  main_canv.drawImageData();
 });
 
-//#endregion
+function getCircSpectrumRads1(rbeg: number, rend: number, rstep: number) {
+  let res = [];
+  for (let i = rbeg; i <= rend; i += rstep) res.push(round(i));
+  return res;
+}
 
-/*
+function getCircSpectrumRads2(rbeg: number, rend: number, ramount: number) {
+  let res = [];
+  let step = (rend - rbeg) / ramount;
+  for (let i = rbeg; i <= rend; i += step) res.push(round(i));
+  return res;
+}
 
-//#region graphs
+function getCircSpectrumRads3(rbeg: number, rstep: number, ramount: number) {
+  let res = [];
+  let r = rbeg;
+  for (let i = 0; i < ramount; ++i) {
+    if (r < 0) r = 0;
+    res.push(round(r));
+    r += rstep;
+  }
+  return res;
+}
 
-const measure_canvas: HTMLCanvasElement = document.createElement("canvas");
-measure_canvas.width = 10000;
-measure_canvas.height = 10000;
-const measure_ctx: CanvasRenderingContext2D = measure_canvas.getContext("2d")!;
+function getCircSpectrumRads4(rend: number, rstep: number, ramount: number) {
+  let res = [];
 
-const hist_canvas: HTMLCanvasElement = document.querySelector("#hist")!;
+  let r = rend;
+  for (let i = 0; i < ramount; ++i) {
+    if (r < 0) r = 0;
+    res.push(round(r));
+    r -= rstep;
+  }
+  return res;
+}
 
-let hist_chart: any = undefined;
-
-function buildTimeChart() {
+btn_build_circ_spectrum.addEventListener("click", () => {
   if (!center_x_input.validateInput())
-    return out.error(`Ошибка ввода координаты x точки центра`);
+    return out.error(`Ошибка ввода кординаты x центра фигуры`);
   if (!center_y_input.validateInput())
-    return out.error(`Ошибка ввода координаты y точки центра`);
+    return out.error(`Ошибка ввода кординаты y центра фигуры`);
 
-  let x1 = center_x_input.value();
-  let y1 = center_y_input.value();
-  let times: number[] = [];
+  let cx = center_x_input.value();
+  let cy = center_y_input.value();
+  let color = color_input.value();
+  let rgbc = HEXtoRGB(color);
+  let buf = main_canv.getBuf();
 
-  let t1 = performance.now();
-  for (let i = 0; i < RUN_COUNT; ++i) {
-    measure_ctx.beginPath();
-    measure_ctx.moveTo(x1, y1);
-    measure_ctx.lineTo(x2, y2);
-    measure_ctx.stroke();
-    measure_ctx.closePath();
+  let circ_b = circ_spectrum_r_start_input.validateInput();
+  let circ_e = circ_spectrum_r_end_input.validateInput();
+  let circ_s = circ_spectrum_r_step_input.validateInput();
+  let circ_a = circ_spectrum_amount_input.validateInput();
+
+  if (Number(circ_b) + Number(circ_e) + Number(circ_s) + Number(circ_a) < 3)
+    return out.error("Недостаточно заполненных полей");
+
+  let rads: number[];
+
+  let r_b = circ_spectrum_r_start_input.value();
+  let r_e = circ_spectrum_r_end_input.value();
+  let r_s = circ_spectrum_r_step_input.value();
+  let r_a = circ_spectrum_amount_input.value();
+
+  if (circ_b && circ_e && circ_s) rads = getCircSpectrumRads1(r_b, r_e, r_s);
+  else if (circ_b && circ_e && circ_a)
+    rads = getCircSpectrumRads2(r_b, r_e, r_a);
+  else if (circ_b && circ_s && circ_a)
+    rads = getCircSpectrumRads3(r_b, r_s, r_a);
+  else rads = getCircSpectrumRads4(r_e, r_s, r_a);
+
+  let i = getChosenAlgIndex();
+  if (i != 0) {
+    rgbc = HEXtoRGB(color);
+    buf = main_canv.getBuf();
   }
-  let t2 = performance.now();
 
-  console.log(t2 - t1);
-
-  times.push(1);
-
-  let buf = measure_ctx.createImageData(main_canv.width, main_canv.height);
-
-  for (let alg of algs) {
-    t1 = window.performance.now();
-    for (let i = 0; i < RUN_COUNT; ++i) {
-      alg.draw(buf, x1, y1, x2, y2, { r: 255, g: 0, b: 0 }, true);
-    }
-    t2 = window.performance.now();
-    times.push(t2 - t1);
+  for (let r of rads) {
+    buildCircle(buf!, cx, cy, r, i, i == 0 ? color : rgbc!);
   }
-
-  // @ts-ignore
-  if (hist_chart !== undefined) hist_chart.destroy();
-  // @ts-ignore
-  hist_chart = new Chart(hist_canvas, {
-    type: "bar",
-    data: {
-      labels: [
-        "Библ.",
-        "ЦДА",
-        "Брез.\nдейств.",
-        "Брез.\nцел.",
-        "Брез.\nступ.",
-        "Ву",
-      ],
-      datasets: [
-        {
-          label: "время выполнения алгоритма в мс",
-          data: times,
-          backgroundColor: [
-            "#f7258522",
-            "#b5179e22",
-            "#7209b722",
-            "#560bad22",
-            "#480ca822",
-            "#3a0ca322",
-          ],
-          borderColor: [
-            "#f72585FF",
-            "#b5179eFF",
-            "#7209b7FF",
-            "#560badFF",
-            "#480ca8FF",
-            "#3a0ca3FF",
-          ],
-          borderWidth: 1,
-        },
-      ],
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-        },
-      },
-    },
-  });
-}
-
-btn_build_hist.addEventListener("click", () => {
-  buildTimeChart();
+  main_canv.drawImageData();
 });
 
-function toRad(angle_deg: number) {
-  return (angle_deg / 180) * m.PI;
+function getElRadsSpectrum(
+  rx_s: number,
+  ry_s: number,
+  step_rx: number,
+  amount: number
+) {
+  let res: number[][] = [];
+
+  let rx = rx_s;
+  let ry = ry_s;
+
+  let step_ry = (step_rx * ry) / rx;
+
+  for (let i = 0; i < amount; ++i) {
+    res.push([round(rx), round(ry)]);
+    rx += step_rx;
+    ry += step_ry;
+  }
+
+  return res;
 }
 
-const amount_canvas: HTMLCanvasElement =
-  document.querySelector("#graph-amount")!;
-const length_canvas: HTMLCanvasElement =
-  document.querySelector("#graph-length")!;
+btn_build_el_spectrum.addEventListener("click", () => {
+  if (!center_x_input.validateInput())
+    return out.error(`Ошибка ввода кординаты x центра фигуры`);
+  if (!center_y_input.validateInput())
+    return out.error(`Ошибка ввода кординаты y центра фигуры`);
 
-let stepcount_chart: any = undefined;
-let steplen_chart: any = undefined;
+  let cx = center_x_input.value();
+  let cy = center_y_input.value();
+  let color = color_input.value();
+  let rgbc = HEXtoRGB(color);
+  let buf = main_canv.getBuf();
 
-function buildStatGraphs() {
-  const len = 100;
+  if (!el_spectrum_rx_start_input.validateInput())
+    return out.error(`Ошибка ввода полуоси x эллипса`);
+  let rx1 = el_spectrum_rx_start_input.value();
+  if (rx1 < 0)
+    return out.error(`Ошибка: Начальное значение полуоси x эллипса меньше 0`);
 
-  let algIndex = getChosenAlgIndex();
-  if (algIndex == 0)
-    return out.error(
-      "Измерение статистики библиотечной функции не поддерживается"
+  if (!el_spectrum_ry_start_input.validateInput())
+    return out.error(`Ошибка ввода полуоси y эллипса`);
+  let ry1 = el_spectrum_ry_start_input.value();
+  if (ry1 < 0)
+    return out.error(`Ошибка: Начальное значение полуоси y эллипса меньше 0`);
+
+  if (!el_spectrum_r_step_input.validateInput())
+    return out.error(`Ошибка чтения шага роста полуосей эллипса`);
+  let rstep = el_spectrum_r_step_input.value();
+
+  if (!el_spectrum_r_amount_input.validateInput())
+    return out.error("Ошибка чтения количества эллипсов");
+  let amount = el_spectrum_r_amount_input.value();
+  if (amount <= 0)
+    return out.error("Ошибка: Количество эллипсов должно быть больше нуля");
+
+  let i = getChosenAlgIndex();
+  if (i != 0) {
+    rgbc = HEXtoRGB(color);
+    buf = main_canv.getBuf();
+  }
+
+  let radpairs: number[][] = getElRadsSpectrum(rx1, ry1, rstep, amount);
+
+  for (let radpair of radpairs) {
+    buildEllipse(
+      buf!,
+      cx,
+      cy,
+      radpair[0],
+      radpair[1],
+      i,
+      i == 0 ? color : rgbc
     );
-
-  let alg = algs[algIndex - 1];
-
-  let x1 = 0;
-  let y1 = 0;
-
-  let angles: number[] = [];
-  let stepcounts: number[] = [];
-  let steplens: number[] = [];
-
-  for (let i = ANGLE_FROM; i <= ANGLE_TO; ++i) {
-    angles.push(i);
-    let a = toRad(i);
-    let x2 = len * m.cos(a);
-    let y2 = len * m.sin(a);
-    stepcounts.push(alg.countSteps(x1, y1, x2, y2));
-    steplens.push(alg.measureStep(x1, y1, x2, y2));
   }
 
-  if (stepcount_chart != undefined)
-    // @ts-ignore
-    stepcount_chart.destroy();
-  if (steplen_chart != undefined)
-    // @ts-ignore
-    steplen_chart.destroy();
-
-  // @ts-ignore
-  stepcount_chart = new Chart(amount_canvas, {
-    type: "line",
-    data: {
-      labels: angles,
-      datasets: [
-        {
-          label: "количество ступенек в зависимости от угла",
-          data: stepcounts,
-          fill: false,
-          tension: 0.3,
-          pointRadius: 2,
-          pointHoverRadius: 5,
-        },
-      ],
-    },
-  });
-  // @ts-ignore
-  steplen_chart = new Chart(length_canvas, {
-    type: "line",
-    data: {
-      labels: angles,
-      datasets: [
-        {
-          label: "длина наибольшей ступеньки в зависимости от угла",
-          data: steplens,
-          fill: false,
-          tension: 0.3,
-          pointRadius: 2,
-          pointHoverRadius: 5,
-        },
-      ],
-    },
-  });
-}
-
-btn_build_graphs.addEventListener("click", () => {
-  buildStatGraphs();
+  main_canv.drawImageData();
 });
-
-//#endregion
-
-//*/
