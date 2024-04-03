@@ -164,4 +164,69 @@ export function buildEllipseMidpoint(
   ry: number,
   color: RGBColor,
   profiling: boolean = false
-) {}
+) {
+  let rx_sq = rx * rx;
+  let ry_sq = ry * ry;
+
+  let xcur = 0;
+  let ycur = ry;
+
+  let trial = 2 * (ry_sq * 2 - rx_sq * 2 * (ry - 1));
+  let dx = 0;
+  let dy = rx_sq * 2 * ycur;
+
+  while (dx < dy) {
+    if (!profiling)
+      setSymPixels(
+        buf,
+        <Pixel>{
+          x: cx + xcur,
+          y: cy + ycur,
+          r: color.r,
+          g: color.g,
+          b: color.b,
+          alpha: 255,
+        },
+        <Axis>{ x: cx, y: cy }
+      );
+
+    xcur++;
+    dx += ry_sq * 2;
+
+    if (trial >= 0) {
+      ycur--;
+      dy -= rx_sq * 2;
+      trial -= 4 * dy;
+    }
+
+    trial += 4 * (dx + ry_sq);
+  }
+
+  trial -= 4 * (ry_sq * (xcur + 3) + rx_sq * (ycur - 3));
+  while (dy >= 0) {
+    if (!profiling)
+      setSymPixels(
+        buf,
+        <Pixel>{
+          x: cx + xcur,
+          y: cy + ycur,
+          r: color.r,
+          g: color.g,
+          b: color.b,
+          alpha: 255,
+        },
+        <Axis>{ x: cx, y: cy }
+      );
+
+    ycur--;
+    dy -= rx_sq * 2;
+
+    if (trial < 0) {
+      xcur++;
+      dx += ry_sq * 2;
+      trial += 4 * dx;
+    }
+
+    trial -= 4 * (dy - rx_sq);
+  }
+}
