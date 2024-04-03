@@ -294,11 +294,11 @@ body {
 }
 
 .pointer {
-  aspect-ratio: 1/1;
   border-radius: 50%;
   background: transparent;
   backdrop-filter: invert(1);
-  width: 15px;
+  width: 5px;
+  height: 5px;
   position: fixed;
   top: 0;
   left: 0;

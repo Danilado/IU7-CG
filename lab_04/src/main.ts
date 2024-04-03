@@ -26,8 +26,10 @@ import {
   el_spectrum_ry_start_input,
   el_spectrum_r_step_input,
   el_spectrum_r_amount_input,
+  btn_build_graphs_circle,
+  btn_build_graphs_ellipse,
 } from "./inputs";
-import { out, round } from "./constants";
+import { RUN_COUNT, R_END, R_START, R_STEP, m, out, round } from "./constants";
 import { HEXtoRGB, RGBColor } from "./pixels";
 import {
   buildCircleCanonical,
@@ -43,6 +45,8 @@ import {
 } from "./ellipse";
 
 import Chart from "chart.js/auto";
+
+let ch: Chart | null = null;
 
 /// <reference path="global.ts" />
 
@@ -94,6 +98,7 @@ function getChosenAlgIndex() {
 }
 
 btn_side.addEventListener("click", () => {
+  clearGraph();
   if (!side_input.validateInput())
     return out.error("Ошибка ввода ширины холста");
   if (side_input.value() < 10)
@@ -104,6 +109,7 @@ btn_side.addEventListener("click", () => {
 });
 
 btn_clear_image.addEventListener("click", () => {
+  clearGraph();
   main_canv.resetImage();
 });
 
@@ -141,23 +147,24 @@ function buildCircle(
   cy: number,
   r: number,
   alg: number,
-  color: RGBColor | string
+  color: RGBColor | string,
+  profile: boolean = false
 ) {
   switch (alg) {
     case 0:
       main_canv.drawCircle(cx, cy, r, color as string);
       break;
     case 1:
-      buildCircleCanonical(buf!, cx, cy, r, color as RGBColor);
+      buildCircleCanonical(buf!, cx, cy, r, color as RGBColor, profile);
       break;
     case 2:
-      buildCircleParametric(buf!, cx, cy, r, color as RGBColor);
+      buildCircleParametric(buf!, cx, cy, r, color as RGBColor, profile);
       break;
     case 3:
-      buildCircleBresenham(buf!, cx, cy, r, color as RGBColor);
+      buildCircleBresenham(buf!, cx, cy, r, color as RGBColor, profile);
       break;
     case 4:
-      buildCircleMidpoint(buf!, cx, cy, r, color as RGBColor);
+      buildCircleMidpoint(buf!, cx, cy, r, color as RGBColor, profile);
       break;
     // case(0):{}break;
     default:
@@ -171,6 +178,7 @@ function buildCircle(
 }
 
 btn_build_circle.addEventListener("click", () => {
+  clearGraph();
   buildCircleFromInputs();
   main_canv.drawImageData();
 });
@@ -212,23 +220,24 @@ function buildEllipse(
   rx: number,
   ry: number,
   alg: number,
-  color: RGBColor | string
+  color: RGBColor | string,
+  profile: boolean = false
 ) {
   switch (alg) {
     case 0:
       main_canv.drawEllipse(cx, cy, rx, ry, color as string);
       break;
     case 1:
-      buildEllipseCanonical(buf!, cx, cy, rx, ry, color as RGBColor);
+      buildEllipseCanonical(buf!, cx, cy, rx, ry, color as RGBColor, profile);
       break;
     case 2:
-      buildEllipseParametric(buf!, cx, cy, rx, ry, color as RGBColor);
+      buildEllipseParametric(buf!, cx, cy, rx, ry, color as RGBColor, profile);
       break;
     case 3:
-      buildEllipseBresenham(buf!, cx, cy, rx, ry, color as RGBColor);
+      buildEllipseBresenham(buf!, cx, cy, rx, ry, color as RGBColor, profile);
       break;
     case 4:
-      buildEllipseMidpoint(buf!, cx, cy, rx, ry, color as RGBColor);
+      buildEllipseMidpoint(buf!, cx, cy, rx, ry, color as RGBColor, profile);
       break;
     // case(0):{}break;
     default:
@@ -242,6 +251,7 @@ function buildEllipse(
 }
 
 btn_build_ellipse.addEventListener("click", () => {
+  clearGraph();
   buildEllipseFromInputs();
   main_canv.drawImageData();
 });
@@ -283,6 +293,7 @@ function getCircSpectrumRads4(rend: number, rstep: number, ramount: number) {
 }
 
 btn_build_circ_spectrum.addEventListener("click", () => {
+  clearGraph();
   if (!center_x_input.validateInput())
     return out.error(`Ошибка ввода кординаты x центра фигуры`);
   if (!center_y_input.validateInput())
@@ -351,6 +362,7 @@ function getElRadsSpectrum(
 }
 
 btn_build_el_spectrum.addEventListener("click", () => {
+  clearGraph();
   if (!center_x_input.validateInput())
     return out.error(`Ошибка ввода кординаты x центра фигуры`);
   if (!center_y_input.validateInput())
@@ -405,4 +417,124 @@ btn_build_el_spectrum.addEventListener("click", () => {
   }
 
   main_canv.drawImageData();
+});
+
+function clearGraph() {
+  if (ch != null) ch.destroy();
+  ch = null;
+}
+
+const measure_canvas: HTMLCanvasElement = document.createElement("canvas");
+measure_canvas.width = 10000;
+measure_canvas.height = 10000;
+const measure_ctx: CanvasRenderingContext2D = measure_canvas.getContext("2d")!;
+let measure_buf = measure_ctx.createImageData(
+  main_canv.width,
+  main_canv.height
+);
+const circle_algs = [
+  buildCircleCanonical,
+  buildCircleParametric,
+  buildCircleBresenham,
+  buildCircleMidpoint,
+];
+
+let radiuses: number[] = [];
+for (let r = R_START; r <= R_END; r += R_STEP) radiuses.push(r);
+
+btn_build_graphs_circle.addEventListener("click", () => {
+  clearGraph();
+  let times: number[][] = [[], [], [], [], []];
+
+  for (let r of radiuses) {
+    let t1 = performance.now();
+    for (let _ = 0; _ < RUN_COUNT; ++_) {
+      measure_ctx.beginPath();
+      measure_ctx.arc(0, 0, r, 0, 2 * m.PI, false);
+      measure_ctx.closePath();
+    }
+    let t2 = performance.now();
+    times[0].push(t2 - t1);
+  }
+
+  let i = 1;
+  for (let alg of circle_algs) {
+    for (let r of radiuses) {
+      let t1 = performance.now();
+      for (let _ = 0; _ < RUN_COUNT; ++_)
+        alg(measure_buf, 0, 0, r, <RGBColor>{ r: 0, g: 0, b: 0 }, true);
+      let t2 = performance.now();
+      times[i].push(t2 - t1);
+    }
+
+    ++i;
+  }
+
+  console.log(times);
+
+  ch = new Chart(main_canvas.getContext("2d")!, {
+    type: "line",
+    data: {
+      labels: radiuses,
+      datasets: [
+        { label: "Библиотечная функция", data: times[0] },
+        { label: "Алгоритм средней точки", data: times[1] },
+        { label: "Алгоритм Брезенхема", data: times[2] },
+        { label: "Параметрическое уравнение", data: times[3] },
+        { label: "Каноническое уравнение", data: times[4] },
+      ],
+    },
+  });
+});
+
+const ellipse_algs = [
+  buildEllipseCanonical,
+  buildEllipseParametric,
+  buildEllipseBresenham,
+  buildEllipseMidpoint,
+];
+
+btn_build_graphs_ellipse.addEventListener("click", () => {
+  clearGraph();
+  let times: number[][] = [[], [], [], [], []];
+
+  for (let r of radiuses) {
+    let t1 = performance.now();
+    for (let _ = 0; _ < RUN_COUNT; ++_) {
+      measure_ctx.beginPath();
+      measure_ctx.ellipse(0, 0, r, r, 0, 0, 2 * m.PI, false);
+      measure_ctx.closePath();
+    }
+    let t2 = performance.now();
+    times[0].push(t2 - t1);
+  }
+
+  let i = 1;
+  for (let alg of ellipse_algs) {
+    for (let r of radiuses) {
+      let t1 = performance.now();
+      for (let _ = 0; _ < RUN_COUNT; ++_)
+        alg(measure_buf, 0, 0, r, r, <RGBColor>{ r: 0, g: 0, b: 0 }, true);
+      let t2 = performance.now();
+      times[i].push(t2 - t1);
+    }
+
+    ++i;
+  }
+
+  console.log(times);
+
+  ch = new Chart(main_canvas.getContext("2d")!, {
+    type: "line",
+    data: {
+      labels: radiuses,
+      datasets: [
+        { label: "Библиотечная функция", data: times[0] },
+        { label: "Алгоритм средней точки", data: times[1] },
+        { label: "Алгоритм Брезенхема", data: times[2] },
+        { label: "Параметрическое уравнение", data: times[3] },
+        { label: "Каноническое уравнение", data: times[4] },
+      ],
+    },
+  });
 });

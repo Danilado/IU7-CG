@@ -139,8 +139,12 @@ export const btn_build_el_spectrum: HTMLInputElement = document.querySelector(
 
 //#endregion
 
-export const btn_build_graphs: HTMLInputElement =
-  document.querySelector("#build-graphs")!;
+export const btn_build_graphs_circle: HTMLInputElement = document.querySelector(
+  "#build-graphs-circle"
+)!;
+
+export const btn_build_graphs_ellipse: HTMLInputElement =
+  document.querySelector("#build-graphs-ellipse")!;
 
 export const btn_clear_image: HTMLInputElement =
   document.querySelector("#clear-image")!;

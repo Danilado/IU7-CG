@@ -104,8 +104,6 @@ export function buildEllipseBresenham(
 
   let cap_delta = ry_sq - rx_sq * (2 * ry - 1);
 
-  let coverage = [0, 0, 0, 0, 0];
-
   while (ycur >= 0) {
     if (!profiling)
       setSymPixels(
@@ -126,12 +124,10 @@ export function buildEllipseBresenham(
       if (d <= 0) {
         xcur++;
         cap_delta += ry_sq * (2 * xcur + 1);
-        coverage[0]++;
       } else {
         xcur++;
         ycur--;
         cap_delta += 2 * xcur * ry_sq - 2 * ycur * rx_sq + rx_sq + ry_sq;
-        coverage[1]++;
       }
     } else if (cap_delta > 0) {
       let d = 2 * cap_delta - ry_sq * (2 * xcur + 1);
@@ -139,20 +135,15 @@ export function buildEllipseBresenham(
         xcur++;
         ycur--;
         cap_delta += 2 * xcur * ry_sq - 2 * ycur * rx_sq + rx_sq + ry_sq;
-        coverage[2]++;
       } else {
         ycur--;
         cap_delta += rx_sq * (-2 * ycur + 1);
-        coverage[3]++;
       }
     } else {
       xcur++;
       ycur--;
       cap_delta += 2 * xcur * ry_sq - 2 * ycur * rx_sq + rx_sq + ry_sq;
-      coverage[4]++;
     }
-
-    console.log(coverage);
   }
 }
 

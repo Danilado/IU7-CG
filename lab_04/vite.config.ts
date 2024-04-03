@@ -6,4 +6,7 @@ export default defineConfig({
     outDir: "./dist",
   },
   base: "./",
+  server: {
+    https: false,
+  },
 });
