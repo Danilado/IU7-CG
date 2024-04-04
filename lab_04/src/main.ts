@@ -478,8 +478,8 @@ btn_build_graphs_circle.addEventListener("click", () => {
       labels: radiuses,
       datasets: [
         { label: "Библиотечная функция", data: times[0] },
-        { label: "Алгоритм средней точки", data: times[1] },
-        { label: "Алгоритм Брезенхема", data: times[2] },
+        { label: "Алгоритм Брезенхема", data: times[1] },
+        { label: "Алгоритм Средней точки", data: times[2] },
         { label: "Параметрическое уравнение", data: times[3] },
         { label: "Каноническое уравнение", data: times[4] },
       ],

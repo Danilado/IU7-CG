@@ -124,23 +124,14 @@ export function buildCircleBresenham(
         <Axis>{ x: cx, y: cy }
       );
     }
-    if (cap_delta < 0) {
-      let delta = 2 * (cap_delta + yoff) - 1;
-      if (delta <= 0) {
-        xoff++; // вправо
-        cap_delta += 2 * xoff + 1;
-      } else {
-        // вправо по диагонали
-        xoff += 1;
-        yoff -= 1;
-        cap_delta += 2 * (xoff - yoff + 1);
-      }
-    } else {
+
+    xoff++; // вправо всегда, т.к. одна восьмая
+    if (cap_delta > 0 || 2 * (cap_delta + yoff) - 1 > 0) {
       // здесь переход только по диагонали, потому что строим 1/8
-      xoff++;
       yoff--;
-      cap_delta += 2 * (xoff - yoff + 1);
+      cap_delta += -2 * yoff + 1;
     }
+    cap_delta += 2 * xoff + 1;
   }
 }
 

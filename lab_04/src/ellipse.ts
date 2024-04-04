@@ -193,7 +193,8 @@ export function buildEllipseMidpoint(
     trial += 4 * (dx + ry_sq);
   }
 
-  trial -= 4 * (ry_sq * (xcur + 3) + rx_sq * (ycur - 3));
+  trial -= ry_sq * (4 * xcur + 3) + rx_sq * (4 * ycur - 3);
+
   while (dy >= 0) {
     if (!profiling)
       setSymPixels(
