@@ -1,3 +1,5 @@
+import { Point } from "./polygon";
+
 export class NumberInput {
   node: HTMLInputElement;
 
@@ -40,13 +42,51 @@ export class ColorInput {
   }
 }
 
-const i_color_node: HTMLInputElement = document.querySelector("#i-color")!;
-export const color_input: ColorInput = new ColorInput(i_color_node);
+export class TextAreaPointsInput {
+  node: HTMLTextAreaElement;
 
-const input_side: HTMLInputElement = document.querySelector("#i-side-length")!;
-export const side_input: NumberInput = new NumberInput(input_side);
-export const btn_side: HTMLInputElement = document.querySelector("#set_width")!;
+  constructor(node: HTMLTextAreaElement) {
+    this.node = node;
+  }
 
-// const : HTMLInputElement = document.querySelector("#")!;
-// const _input: NumberInput = new NumberInput();
-// const btn_: HTMLInputElement = document.querySelector("#")!;
+  validateInput(): boolean {
+    return this.node.value
+      .trim()
+      .split("\n")
+      .every((line) => {
+        return line.trim().split(" ").length == 2;
+      });
+  }
+
+  value(): Point[] {
+    return this.node.value
+      .trim()
+      .split("\n")
+      .map((line) => {
+        return new Point(line.trim().split(" "));
+      });
+  }
+}
+
+export class Inputs {
+  private _color: ColorInput;
+  private _points: TextAreaPointsInput;
+
+  constructor(
+    color_field: HTMLInputElement,
+    points_field: HTMLTextAreaElement
+  ) {
+    this._color = new ColorInput(color_field);
+    this._points = new TextAreaPointsInput(points_field);
+  }
+
+  public get color(): string {
+    if (!this._color.validateInput()) throw new Error("Ошибка выбора цвета");
+    return this._color.value();
+  }
+
+  public get points(): Point[] {
+    if (!this._points.validateInput()) throw new Error("Ошибка ввода точек");
+    return this._points.value();
+  }
+}

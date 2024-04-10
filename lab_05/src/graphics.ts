@@ -1,16 +1,28 @@
-import { canvasHeightLabel, canvasWidthLabel } from "./labels";
-import { floor, m } from "./constants";
+import { floor } from "./constants";
+import { Point, Polygon } from "./polygon";
+
+const canvasWidthLabel: HTMLSpanElement = document.querySelector(".c-width")!;
+const canvasHeightLabel: HTMLSpanElement = document.querySelector(".c-height")!;
 
 export interface coords {
   x: number;
   y: number;
 }
 
+function getPtFromEvent(node: HTMLElement, e: MouseEvent) {
+  let bcr = node.getBoundingClientRect();
+  return new Point(e.clientX - bcr.x, e.clientY - bcr.y);
+}
+
 export class Graphics {
+  node: HTMLCanvasElement;
   renderer: CanvasRenderingContext2D;
   ctx: CanvasRenderingContext2D;
   image: ImageData;
   ar: number;
+
+  choosing: boolean;
+  polygon: Polygon;
 
   private _width: number;
   public get width(): number {
@@ -42,6 +54,7 @@ export class Graphics {
 
   constructor(renderer: CanvasRenderingContext2D, width: number) {
     this.renderer = renderer;
+    this.node = renderer.canvas;
     this.renderer.imageSmoothingEnabled = false;
 
     this.ctx = document.createElement("canvas").getContext("2d")!;
@@ -59,68 +72,79 @@ export class Graphics {
 
     this.image = this.ctx.createImageData(this.width, this.height);
 
-    this.drawImageData();
+    this.choosing = false;
+    this.polygon = new Polygon(this);
+
+    // this.drawImageData();
+
+    this.ctx.strokeStyle = "black";
+
+    this.node.addEventListener("click", (e) => {
+      this.addPointListner(e);
+    });
+
+    this.node.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      this.closePathListener();
+    });
+
+    this.node.addEventListener("mousemove", (e) => {
+      this.mouseMoveListener(e);
+    });
   }
 
-  drawCircle(x_c: number, y_c: number, r: number, color: string) {
-    this.ctx.putImageData(this.image, 0, 0);
-
-    this.ctx.strokeStyle = color;
-    this.ctx.beginPath();
-    this.ctx.arc(x_c, y_c, r, 0, 2 * m.PI);
-    this.ctx.closePath();
-    this.ctx.stroke();
-
-    this.image = this.ctx.getImageData(0, 0, this.width, this.height);
-
-    this.drawImageData();
+  update() {
+    this.polygon.drawEdges();
   }
 
-  drawEllipse(
-    x_c: number,
-    y_c: number,
-    r_x: number,
-    r_y: number,
-    color: string
-  ) {
-    this.ctx.putImageData(this.image, 0, 0);
-
-    this.ctx.strokeStyle = color;
-    this.ctx.beginPath();
-    this.ctx.ellipse(x_c, y_c, r_x, r_y, 0, 0, 2 * m.PI);
-    this.ctx.closePath();
-    this.ctx.stroke();
-
-    this.image = this.ctx.getImageData(0, 0, this.width, this.height);
-
-    this.drawImageData();
+  addPointListner(e: MouseEvent) {
+    if (!this.choosing) this.choosing = true;
+    else {
+      this.clearCtx();
+      this.polygon.addNode(getPtFromEvent(this.node, e));
+      this.polygon.drawHelpful(getPtFromEvent(this.node, e));
+    }
   }
 
-  getBuf(): ImageData {
-    return this.image;
+  closePathListener() {
+    this.clearCtx();
+    this.choosing = false;
+    this.update();
   }
 
-  putImageData(img: ImageData) {
-    this.image = img;
-    this.drawImageData();
+  mouseMoveListener(e: MouseEvent) {
+    // TODO: add checking for custom canvas size
+    if (this.choosing) {
+      this.clearCtx();
+      this.polygon.drawHelpful(getPtFromEvent(this.node, e));
+    }
   }
 
-  drawImageData() {
-    this.renderer.clearRect(
-      0,
-      0,
-      this.renderer.canvas.width,
-      this.renderer.canvas.height
-    );
-    this.ctx.putImageData(this.image, 0, 0);
-    this.renderer.drawImage(
-      this.ctx.canvas,
-      0,
-      0,
-      this.width * this.getPixelSize(),
-      floor(this.height) * this.getPixelSize()
-    );
-  }
+  // getBuf(): ImageData {
+  //   return this.image;
+  // }
+
+  // putImageData(img: ImageData) {
+  //   this.image = img;
+  //   this.drawImageData();
+  // }
+
+  // drawImageData() {
+  //   this.renderer.clearRect(
+  //     0,
+  //     0,
+  //     this.renderer.canvas.width,
+  //     this.renderer.canvas.height
+  //   );
+  //   this.ctx.putImageData(this.image, 0, 0);
+  //   this.renderer.drawImage(
+  //     this.ctx.canvas,
+  //     0,
+  //     0,
+  //     this.width * this.getPixelSize(),
+  //     floor(this.height) * this.getPixelSize()
+  //   );
+  // }
 
   resizeCtx() {
     this.ctx.canvas.width = this.width;
@@ -128,6 +152,7 @@ export class Graphics {
   }
 
   clearCtx() {
+    this.renderer.clearRect(0, 0, this.width, this.height);
     this.ctx.clearRect(0, 0, this.width, this.height);
   }
 
@@ -140,19 +165,7 @@ export class Graphics {
     this.resizeCtx();
     this.clearCtx();
     this.image = this.ctx.createImageData(this.width, this.height);
-    this.drawImageData();
-  }
-
-  getDocumentCoords(x: number, y: number) {
-    let documentStuff = this.renderer.canvas.getBoundingClientRect();
-
-    let baseX = documentStuff.x;
-    let baseY = documentStuff.y;
-
-    return <coords>{
-      x: baseX + (x / this.width) * documentStuff.width,
-      y: baseY + (y / this.height) * documentStuff.height,
-    };
+    // this.drawImageData();
   }
 
   getPixelSize() {
