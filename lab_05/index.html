@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- <link rel="stylesheet" href="./css/style.css" /> -->
+    <title>ЛР4</title>
+  </head>
+  <body>
+    <div class="main">
+      <div class="inputs">
+        <!--center - linked-->
+        <div class="verbal">
+          <div>Координаты центра фигуры</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="center-x"
+              class="texinput"
+              placeholder="x центра"
+            />
+            <input
+              type="text"
+              name=""
+              id="center-y"
+              class="texinput"
+              placeholder="y центра"
+            />
+          </div>
+        </div>
+        <!--color - linked-->
+        <div class="verbal">
+          <label for="i-color">Выбор цвета</label>
+          <div class="row">
+            <input
+              type="color"
+              class="texinput"
+              placeholder="Цвет"
+              id="i-color"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="стандартный"
+              class="widebutton"
+              id="set_default_color"
+            />
+            <input
+              type="button"
+              value="цвет фона"
+              class="widebutton"
+              id="set_bg_color"
+            />
+          </div>
+        </div>
+        <!--alg - TODO-->
+        <div class="verbal">
+          <div>Выбор алгоритма</div>
+          <div class="radiobox">
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="libfunc"
+                class="radiobutton"
+                checked
+              />
+              <label class="radiotext" for="libfunc">
+                Библиотечная функция
+              </label>
+            </div>
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="canonical"
+                class="radiobutton"
+              />
+              <label class="radiotext" for="canonical">
+                Каноническое уравнение
+              </label>
+            </div>
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="parametric"
+                class="radiobutton"
+              />
+              <label class="radiotext" for="parametric">
+                Параметрическое уравнение
+              </label>
+            </div>
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="bresenham"
+                class="radiobutton"
+              />
+              <label class="radiotext" for="bresenham">
+                Алгоритм Брезенхема
+              </label>
+            </div>
+            <div class="radioitem">
+              <input
+                type="radio"
+                name="alg"
+                id="midpoint"
+                class="radiobutton"
+              />
+              <label class="radiotext" for="midpoint">
+                Алгоритм средней точки
+              </label>
+            </div>
+          </div>
+        </div>
+        <!--circle - linked-->
+        <div class="verbal">
+          <div>Построить окружность</div>
+          <div class="row">
+            <input
+              type="text"
+              value=""
+              class="texinput"
+              placeholder="Радиус окружности"
+              id="circle-radius"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Построить"
+              class="widebutton"
+              id="build-circle"
+            />
+          </div>
+        </div>
+        <!--ellipse - linked-->
+        <div class="verbal">
+          <div>Построить эллипс</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="ellipse-x"
+              placeholder="Полуось x эллипса"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="ellipse-y"
+              placeholder="Полуось y эллипса"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Построить"
+              class="widebutton"
+              id="build-ellipse"
+            />
+          </div>
+        </div>
+        <!--circ spectrum - linked-->
+        <div class="verbal">
+          <div>Построить спектр окружностей</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="circle-spectrum-r1"
+              placeholder="начальный радиус"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="circle-spectrum-r2"
+              placeholder="конечный радиус"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="circle-spectrum-step"
+              placeholder="шаг радиуса"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="circle-spectrum-amount"
+              placeholder="кол-во окружностей"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Построить"
+              class="widebutton"
+              id="build-circle-spectrum"
+            />
+          </div>
+        </div>
+        <!--el spectrum - linked-->
+        <div class="verbal">
+          <div>Построить спектр эллипсов</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="ellipse-spectrum-r1"
+              placeholder="нач. полуось x"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="ellipse-spectrum-r2"
+              placeholder="нач. полуось y"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="ellipse-spectrum-step"
+              placeholder="шаг увеличения (x)"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="ellipse-spectrum-amount"
+              placeholder="кол-во эллипсов"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Построить"
+              class="widebutton"
+              id="build-ellipse-spectrum"
+            />
+          </div>
+        </div>
+        <!--graphs button - linked-->
+        <div class="verbal">
+          <div>Графики скорости работы</div>
+          <div class="row">
+            <input
+              type="button"
+              value="Рассчитать для окружностей"
+              class="widebutton"
+              id="build-graphs-circle"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Рассчитать для эллипсов"
+              class="widebutton"
+              id="build-graphs-ellipse"
+            />
+          </div>
+        </div>
+        <!--clear - linked-->
+        <div class="verbal">
+          <div>Очистка холста</div>
+          <div class="row">
+            <input
+              type="button"
+              value="Очистить"
+              id="clear-image"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <!--canvas size - linked-->
+        <div class="verbal">
+          <div>Задать размеры холста</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="i-side-length"
+              placeholder="Ширина в пикселях"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Задать"
+              class="widebutton"
+              id="set_width"
+            />
+          </div>
+        </div>
+        <div class="verbal noflex" style="border: none">
+          Размеры холста:
+          <span class="c-width">N/A</span>
+          x
+          <span class="c-height">N/A</span>
+        </div>
+      </div>
+      <div class="col">
+        <div class="container">
+          <div class="pointer" id="pointer-center"></div>
+          <canvas id="main_canvas"> </canvas>
+        </div>
+        <div class="footer">
+          <input
+            type="button"
+            value="очистить"
+            id="clearout"
+            class="button clearout"
+          />
+          <input
+            type="button"
+            value="смена темы"
+            id="themechange"
+            class="button themechange"
+          />
+          <div class="footertext"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

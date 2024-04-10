@@ -1,4 +1,4 @@
-import "../css/style.css";
+import "../css/style.scss";
 
 import { pointer_x } from "./labels";
 import { Graphics } from "./graphics";
@@ -43,10 +43,6 @@ import {
   buildEllipseBresenham,
   buildEllipseMidpoint,
 } from "./ellipse";
-
-import Chart from "chart.js/auto";
-
-let ch: Chart | null = null;
 
 /// <reference path="global.ts" />
 
@@ -420,8 +416,8 @@ btn_build_el_spectrum.addEventListener("click", () => {
 });
 
 function clearGraph() {
-  if (ch != null) ch.destroy();
-  ch = null;
+  // if (ch != null) ch.destroy();
+  // ch = null;
 }
 
 const measure_canvas: HTMLCanvasElement = document.createElement("canvas");
@@ -472,19 +468,19 @@ btn_build_graphs_circle.addEventListener("click", () => {
 
   console.log(times);
 
-  ch = new Chart(main_canvas.getContext("2d")!, {
-    type: "line",
-    data: {
-      labels: radiuses,
-      datasets: [
-        { label: "Библиотечная функция", data: times[0], hidden: true },
-        { label: "Алгоритм Брезенхема", data: times[1] },
-        { label: "Алгоритм Средней точки", data: times[2] },
-        { label: "Параметрическое уравнение", data: times[3] },
-        { label: "Каноническое уравнение", data: times[4] },
-      ],
-    },
-  });
+  // ch = new Chart(main_canvas.getContext("2d")!, {
+  //   type: "line",
+  //   data: {
+  //     labels: radiuses,
+  //     datasets: [
+  //       { label: "Библиотечная функция", data: times[0], hidden: true },
+  //       { label: "Алгоритм Брезенхема", data: times[1] },
+  //       { label: "Алгоритм Средней точки", data: times[2] },
+  //       { label: "Параметрическое уравнение", data: times[3] },
+  //       { label: "Каноническое уравнение", data: times[4] },
+  //     ],
+  //   },
+  // });
 });
 
 const ellipse_algs = [
@@ -524,17 +520,17 @@ btn_build_graphs_ellipse.addEventListener("click", () => {
 
   console.log(times);
 
-  ch = new Chart(main_canvas.getContext("2d")!, {
-    type: "line",
-    data: {
-      labels: radiuses,
-      datasets: [
-        { label: "Библиотечная функция", data: times[0], hidden: true },
-        { label: "Алгоритм Брезенхема", data: times[1] },
-        { label: "Алгоритм средней точки", data: times[2] },
-        { label: "Параметрическое уравнение", data: times[3] },
-        { label: "Каноническое уравнение", data: times[4] },
-      ],
-    },
-  });
+  // ch = new Chart(main_canvas.getContext("2d")!, {
+  //   type: "line",
+  //   data: {
+  //     labels: radiuses,
+  //     datasets: [
+  //       { label: "Библиотечная функция", data: times[0], hidden: true },
+  //       { label: "Алгоритм Брезенхема", data: times[1] },
+  //       { label: "Алгоритм средней точки", data: times[2] },
+  //       { label: "Параметрическое уравнение", data: times[3] },
+  //       { label: "Каноническое уравнение", data: times[4] },
+  //     ],
+  //   },
+  // });
 });
