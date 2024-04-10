@@ -3,35 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- <link rel="stylesheet" href="./css/style.css" /> -->
-    <title>ЛР4</title>
+    <title>ЛР5</title>
   </head>
   <body>
     <div class="main">
       <div class="inputs">
-        <!--center - linked-->
+        <!--color - TODO-->
         <div class="verbal">
-          <div>Координаты центра фигуры</div>
-          <div class="row">
-            <input
-              type="text"
-              name=""
-              id="center-x"
-              class="texinput"
-              placeholder="x центра"
-            />
-            <input
-              type="text"
-              name=""
-              id="center-y"
-              class="texinput"
-              placeholder="y центра"
-            />
-          </div>
-        </div>
-        <!--color - linked-->
-        <div class="verbal">
-          <label for="i-color">Выбор цвета</label>
+          <label for="i-color">Выбор цвета закраски</label>
           <div class="row">
             <input
               type="color"
@@ -40,241 +19,75 @@
               id="i-color"
             />
           </div>
+        </div>
+        <!--points - TODO-->
+        <div class="verbal high">
+          <div>Точки</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="new-point-x"
+              placeholder="Координата x точки"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="new-point-y"
+              placeholder="Координата y точки"
+              class="texinput"
+            />
+          </div>
           <div class="row">
             <input
               type="button"
-              value="стандартный"
+              value="Добавить точку"
               class="widebutton"
-              id="set_default_color"
+              id="build-ellipse"
             />
             <input
               type="button"
-              value="цвет фона"
+              value="Замкнуть фигуру"
               class="widebutton"
-              id="set_bg_color"
+              id="build-ellipse"
             />
           </div>
-        </div>
-        <!--alg - TODO-->
-        <div class="verbal">
-          <div>Выбор алгоритма</div>
-          <div class="radiobox">
-            <div class="radioitem">
-              <input
-                type="radio"
-                name="alg"
-                id="libfunc"
-                class="radiobutton"
-                checked
-              />
-              <label class="radiotext" for="libfunc">
-                Библиотечная функция
-              </label>
-            </div>
-            <div class="radioitem">
-              <input
-                type="radio"
-                name="alg"
-                id="canonical"
-                class="radiobutton"
-              />
-              <label class="radiotext" for="canonical">
-                Каноническое уравнение
-              </label>
-            </div>
-            <div class="radioitem">
-              <input
-                type="radio"
-                name="alg"
-                id="parametric"
-                class="radiobutton"
-              />
-              <label class="radiotext" for="parametric">
-                Параметрическое уравнение
-              </label>
-            </div>
-            <div class="radioitem">
-              <input
-                type="radio"
-                name="alg"
-                id="bresenham"
-                class="radiobutton"
-              />
-              <label class="radiotext" for="bresenham">
-                Алгоритм Брезенхема
-              </label>
-            </div>
-            <div class="radioitem">
-              <input
-                type="radio"
-                name="alg"
-                id="midpoint"
-                class="radiobutton"
-              />
-              <label class="radiotext" for="midpoint">
-                Алгоритм средней точки
-              </label>
-            </div>
+          <div class="row high">
+            <textarea
+              type="textbox"
+              name=""
+              id="new-point-y"
+              placeholder="Координаты точек (через пробел, каждая - с новой строки)"
+              class="texinput"
+            ></textarea>
+          </div>
+          <div class="row">
+            Или нажимайте ЛКМ, чтобы добавить точку и ПКМ, чтобы замкнуть фигуру
           </div>
         </div>
-        <!--circle - linked-->
+        <!--fill - TODO-->
         <div class="verbal">
-          <div>Построить окружность</div>
+          <div>Закраска</div>
           <div class="row">
             <input
               type="text"
               value=""
               class="texinput"
-              placeholder="Радиус окружности"
-              id="circle-radius"
+              placeholder="Задержка"
+              id="delay"
             />
           </div>
           <div class="row">
             <input
               type="button"
-              value="Построить"
+              value="Закрасить"
               class="widebutton"
-              id="build-circle"
+              id="fill"
             />
           </div>
         </div>
-        <!--ellipse - linked-->
-        <div class="verbal">
-          <div>Построить эллипс</div>
-          <div class="row">
-            <input
-              type="text"
-              name=""
-              id="ellipse-x"
-              placeholder="Полуось x эллипса"
-              class="texinput"
-            />
-            <input
-              type="text"
-              name=""
-              id="ellipse-y"
-              placeholder="Полуось y эллипса"
-              class="texinput"
-            />
-          </div>
-          <div class="row">
-            <input
-              type="button"
-              value="Построить"
-              class="widebutton"
-              id="build-ellipse"
-            />
-          </div>
-        </div>
-        <!--circ spectrum - linked-->
-        <div class="verbal">
-          <div>Построить спектр окружностей</div>
-          <div class="row">
-            <input
-              type="text"
-              name=""
-              id="circle-spectrum-r1"
-              placeholder="начальный радиус"
-              class="texinput"
-            />
-            <input
-              type="text"
-              name=""
-              id="circle-spectrum-r2"
-              placeholder="конечный радиус"
-              class="texinput"
-            />
-          </div>
-          <div class="row">
-            <input
-              type="text"
-              name=""
-              id="circle-spectrum-step"
-              placeholder="шаг радиуса"
-              class="texinput"
-            />
-            <input
-              type="text"
-              name=""
-              id="circle-spectrum-amount"
-              placeholder="кол-во окружностей"
-              class="texinput"
-            />
-          </div>
-          <div class="row">
-            <input
-              type="button"
-              value="Построить"
-              class="widebutton"
-              id="build-circle-spectrum"
-            />
-          </div>
-        </div>
-        <!--el spectrum - linked-->
-        <div class="verbal">
-          <div>Построить спектр эллипсов</div>
-          <div class="row">
-            <input
-              type="text"
-              name=""
-              id="ellipse-spectrum-r1"
-              placeholder="нач. полуось x"
-              class="texinput"
-            />
-            <input
-              type="text"
-              name=""
-              id="ellipse-spectrum-r2"
-              placeholder="нач. полуось y"
-              class="texinput"
-            />
-          </div>
-          <div class="row">
-            <input
-              type="text"
-              name=""
-              id="ellipse-spectrum-step"
-              placeholder="шаг увеличения (x)"
-              class="texinput"
-            />
-            <input
-              type="text"
-              name=""
-              id="ellipse-spectrum-amount"
-              placeholder="кол-во эллипсов"
-              class="texinput"
-            />
-          </div>
-          <div class="row">
-            <input
-              type="button"
-              value="Построить"
-              class="widebutton"
-              id="build-ellipse-spectrum"
-            />
-          </div>
-        </div>
-        <!--graphs button - linked-->
-        <div class="verbal">
-          <div>Графики скорости работы</div>
-          <div class="row">
-            <input
-              type="button"
-              value="Рассчитать для окружностей"
-              class="widebutton"
-              id="build-graphs-circle"
-            />
-          </div>
-          <div class="row">
-            <input
-              type="button"
-              value="Рассчитать для эллипсов"
-              class="widebutton"
-              id="build-graphs-ellipse"
-            />
-          </div>
-        </div>
-        <!--clear - linked-->
+        <!--clear - TODO-->
         <div class="verbal">
           <div>Очистка холста</div>
           <div class="row">
@@ -286,7 +99,7 @@
             />
           </div>
         </div>
-        <!--canvas size - linked-->
+        <!--canvas size - TODO-->
         <div class="verbal">
           <div>Задать размеры холста</div>
           <div class="row">
@@ -316,22 +129,9 @@
       </div>
       <div class="col">
         <div class="container">
-          <div class="pointer" id="pointer-center"></div>
           <canvas id="main_canvas"> </canvas>
         </div>
         <div class="footer">
-          <input
-            type="button"
-            value="очистить"
-            id="clearout"
-            class="button clearout"
-          />
-          <input
-            type="button"
-            value="смена темы"
-            id="themechange"
-            class="button themechange"
-          />
           <div class="footertext"></div>
         </div>
       </div>

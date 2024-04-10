@@ -1,0 +1,26 @@
+body .main {
+  display: flex;
+  flex-direction: row;
+  height: $canvas_height;
+
+  .container {
+    width: $canvas_width;
+    height: $canvas_height;
+    border-right: 1px $font-color solid;
+    overflow: hidden;
+    &.dark {
+      border-right: 1px $font-color-dark solid;
+    }
+
+    canvas {
+      width: $canvas_width;
+      height: $canvas_height;
+      position: absolute;
+      background: transparent;
+      &.dark {
+        background: transparent;
+        filter: invert(1);
+      }
+    }
+  }
+}
