@@ -15,7 +15,7 @@ export default class App {
       canvas.getBoundingClientRect().width
     );
 
-    this.controls = getControls();
+    this.controls = getControls(this.graphics);
     console.log(this.controls.points);
   }
 }

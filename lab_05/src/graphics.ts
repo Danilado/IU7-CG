@@ -1,5 +1,5 @@
 import { floor } from "./constants";
-import { Point, Polygon } from "./polygon";
+import { Polygon } from "./polygon";
 
 const canvasWidthLabel: HTMLSpanElement = document.querySelector(".c-width")!;
 const canvasHeightLabel: HTMLSpanElement = document.querySelector(".c-height")!;
@@ -7,11 +7,6 @@ const canvasHeightLabel: HTMLSpanElement = document.querySelector(".c-height")!;
 export interface coords {
   x: number;
   y: number;
-}
-
-function getPtFromEvent(node: HTMLElement, e: MouseEvent) {
-  let bcr = node.getBoundingClientRect();
-  return new Point(e.clientX - bcr.x, e.clientY - bcr.y);
 }
 
 export class Graphics {
@@ -78,46 +73,11 @@ export class Graphics {
     // this.drawImageData();
 
     this.ctx.strokeStyle = "black";
-
-    this.node.addEventListener("click", (e) => {
-      this.addPointListner(e);
-    });
-
-    this.node.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      this.closePathListener();
-    });
-
-    this.node.addEventListener("mousemove", (e) => {
-      this.mouseMoveListener(e);
-    });
   }
 
   update() {
-    this.polygon.drawEdges();
-  }
-
-  addPointListner(e: MouseEvent) {
-    if (!this.choosing) this.choosing = true;
-    else {
-      this.clearCtx();
-      this.polygon.addNode(getPtFromEvent(this.node, e));
-      this.polygon.drawHelpful(getPtFromEvent(this.node, e));
-    }
-  }
-
-  closePathListener() {
     this.clearCtx();
-    this.choosing = false;
-    this.update();
-  }
-
-  mouseMoveListener(e: MouseEvent) {
-    // TODO: add checking for custom canvas size
-    if (this.choosing) {
-      this.clearCtx();
-      this.polygon.drawHelpful(getPtFromEvent(this.node, e));
-    }
+    this.polygon.drawEdges();
   }
 
   // getBuf(): ImageData {

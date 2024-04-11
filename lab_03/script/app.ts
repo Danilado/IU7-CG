@@ -1195,6 +1195,7 @@ class Graphics {
     this.resizeCtx();
     this.clearCtx();
     this.image = this.ctx.createImageData(this.width, this.height);
+    this.renderer.imageSmoothingEnabled = false;
     this.drawImageData();
   }
 

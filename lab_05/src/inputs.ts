@@ -1,4 +1,9 @@
-import { Point } from "./polygon";
+import { round } from "./constants";
+import { Graphics } from "./graphics";
+import CleanBtn from "./inputs/cleaner";
+import GraphicsListeners from "./inputs/graphicsListeners";
+import { PointsListeners, TextAreaPointsInput } from "./inputs/pointsListeners";
+import { Point, Polygon } from "./polygon";
 
 export class NumberInput {
   node: HTMLInputElement;
@@ -42,51 +47,63 @@ export class ColorInput {
   }
 }
 
-export class TextAreaPointsInput {
-  node: HTMLTextAreaElement;
-
-  constructor(node: HTMLTextAreaElement) {
-    this.node = node;
-  }
-
-  validateInput(): boolean {
-    return this.node.value
-      .trim()
-      .split("\n")
-      .every((line) => {
-        return line.trim().split(" ").length == 2;
-      });
-  }
-
-  value(): Point[] {
-    return this.node.value
-      .trim()
-      .split("\n")
-      .map((line) => {
-        return new Point(line.trim().split(" "));
-      });
-  }
-}
-
 export class Inputs {
-  private _color: ColorInput;
-  private _points: TextAreaPointsInput;
+  private _color: HTMLInputElement;
+  private _points: HTMLTextAreaElement;
+
+  private gr: Graphics;
+  private color_i: ColorInput;
+  private points_i: TextAreaPointsInput;
+
+  canv_listeners: GraphicsListeners;
+  pts_listeners: PointsListeners;
+  clean_listener: CleanBtn;
+
+  static getPtFromEvent(node: HTMLElement, e: MouseEvent) {
+    let bcr = node.getBoundingClientRect();
+    return new Point(round(e.clientX - bcr.x), round(e.clientY - bcr.y));
+  }
 
   constructor(
     color_field: HTMLInputElement,
-    points_field: HTMLTextAreaElement
+    points_field: HTMLTextAreaElement,
+    clean_inp: HTMLInputElement,
+    canv: Graphics
   ) {
-    this._color = new ColorInput(color_field);
-    this._points = new TextAreaPointsInput(points_field);
+    this._color = color_field;
+    this.color_i = new ColorInput(color_field);
+
+    this._points = points_field;
+    this.pts_listeners = new PointsListeners(points_field, this);
+    this.points_i = this.pts_listeners.points_i;
+
+    this.gr = canv;
+    this.canv_listeners = new GraphicsListeners(canv, this);
+
+    this.clean_listener = new CleanBtn(clean_inp, this.gr, this.points_i);
+  }
+
+  updateCanv() {
+    this.gr.update();
+  }
+
+  setCanvPoly(pts: Point[]) {
+    this.gr.polygon = new Polygon(this.gr, pts);
+    this.gr.update();
+  }
+
+  setPointsValue(val: string) {
+    this._points.value = val;
+    this._points.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true }));
   }
 
   public get color(): string {
-    if (!this._color.validateInput()) throw new Error("Ошибка выбора цвета");
-    return this._color.value();
+    if (!this.color_i.validateInput()) throw new Error("Ошибка выбора цвета");
+    return this.color_i.value();
   }
 
   public get points(): Point[] {
-    if (!this._points.validateInput()) throw new Error("Ошибка ввода точек");
-    return this._points.value();
+    if (!this.points_i.validateInput()) throw new Error("Ошибка ввода точек");
+    return this.points_i.value();
   }
 }

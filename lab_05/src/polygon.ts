@@ -19,6 +19,10 @@ export class Point {
       this.y = parseFloat(val1[1]);
     }
   }
+
+  public toString(): string {
+    return `${this.x} ${this.y}`;
+  }
 }
 
 export class Polygon {
@@ -97,4 +101,16 @@ export class Polygon {
   fill() {}
 
   fillWithDelay(delay: number) {}
+
+  clear() {
+    this.points = [];
+  }
+
+  public toString(): string {
+    return this.points
+      .map((pt) => {
+        return pt.toString();
+      })
+      .join("\n");
+  }
 }
