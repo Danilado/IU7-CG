@@ -1,4 +1,12 @@
+import { abs, max, min, round } from "./constants";
 import { Graphics } from "./graphics";
+
+interface Boundaries {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
 
 export class Point {
   x: number;
@@ -98,9 +106,83 @@ export class Polygon {
     ctx.closePath();
   }
 
-  fill() {}
+  fill(delay: number) {
+    let buf = this.context.getBuf();
 
-  fillWithDelay(delay: number) {}
+    let bounds = this.getBoundaries();
+
+    let intersections = this.getSearchLineCrossList(bounds);
+  }
+
+  getBoundaries(): Boundaries {
+    if (this.points.length === 0)
+      return <Boundaries>{ x1: 0, y1: 0, x2: 0, y2: 0 };
+
+    let res: Boundaries = {
+      x1: Infinity,
+      y1: Infinity,
+      x2: 0,
+      y2: 0,
+    };
+
+    for (let pt of this.points) {
+      res.x1 = min(res.x1, pt.x);
+      res.x2 = max(res.x2, pt.x);
+      res.y1 = min(res.y1, pt.y);
+      res.y2 = max(res.y2, pt.y);
+    }
+
+    return res;
+  }
+
+  private getBorder(pt1: Point, pt2: Point): Point[] {
+    let res: Point[] = [];
+
+    if (pt1.x == pt2.x && pt1.y == pt2.y) return [new Point(pt1.x, pt1.y)];
+
+    let l = max(abs(pt2.x - pt1.x), abs(pt2.y - pt1.y));
+
+    let dx = (pt2.x - pt1.x) / l;
+    let dy = (pt2.y - pt1.y) / l;
+
+    let x = pt1.x;
+    let y = pt1.y;
+
+    for (let i = 0; i <= l; ++i) {
+      res.push(new Point(round(x), round(y)));
+      x += dx;
+      y += dy;
+    }
+
+    return res;
+  }
+
+  private getBorderPixels(): Point[] {
+    let res: Point[] = [];
+
+    for (let i = 0; i < this.points.length - 1; ++i)
+      res = res.concat(this.getBorder(this.points[i], this.points[i + 1]));
+
+    res = res.concat(
+      this.getBorder(this.points[0], this.points[this.points.length - 1])
+    );
+
+    return res;
+  }
+
+  getSearchLineCrossList(bounds: Boundaries): Point[][] {
+    if (this.points.length < 3)
+      throw Error("Недостаточно точек для закраски многоугольника");
+
+    let res: Point[][] = [];
+
+    for (let i = bounds.y1; i <= bounds.y2; ++i) res.push([]);
+    let intersections = this.getBorderPixels();
+
+    for (let pt of intersections) res[pt.y - bounds.y1].push(pt);
+
+    return res;
+  }
 
   clear() {
     this.points = [];

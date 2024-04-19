@@ -1,5 +1,4 @@
 import { Graphics } from "../graphics";
-import { Polygon } from "../polygon";
 import { TextAreaPointsInput } from "./pointsListeners";
 
 export default class CleanBtn {

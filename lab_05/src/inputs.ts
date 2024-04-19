@@ -1,6 +1,7 @@
 import { round } from "./constants";
 import { Graphics } from "./graphics";
 import CleanBtn from "./inputs/cleaner";
+import FillBtn from "./inputs/fillbtn";
 import GraphicsListeners from "./inputs/graphicsListeners";
 import { PointsListeners, TextAreaPointsInput } from "./inputs/pointsListeners";
 import { Point, Polygon } from "./polygon";
@@ -58,6 +59,7 @@ export class Inputs {
   canv_listeners: GraphicsListeners;
   pts_listeners: PointsListeners;
   clean_listener: CleanBtn;
+  fill_listener: FillBtn;
 
   static getPtFromEvent(node: HTMLElement, e: MouseEvent) {
     let bcr = node.getBoundingClientRect();
@@ -68,6 +70,7 @@ export class Inputs {
     color_field: HTMLInputElement,
     points_field: HTMLTextAreaElement,
     clean_inp: HTMLInputElement,
+    fill_btn: HTMLInputElement,
     canv: Graphics
   ) {
     this._color = color_field;
@@ -81,6 +84,8 @@ export class Inputs {
     this.canv_listeners = new GraphicsListeners(canv, this);
 
     this.clean_listener = new CleanBtn(clean_inp, this.gr, this.points_i);
+
+    this.fill_listener = new FillBtn(fill_btn, this.gr);
   }
 
   updateCanv() {

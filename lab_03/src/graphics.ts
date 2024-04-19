@@ -1,23 +1,20 @@
 import { floor } from "./constants";
-import { Polygon } from "./polygon";
+import { canvasWidthLabel, canvasHeightLabel } from "./labels";
 
-const canvasWidthLabel: HTMLSpanElement = document.querySelector(".c-width")!;
-const canvasHeightLabel: HTMLSpanElement = document.querySelector(".c-height")!;
+function sumImageData(from: ImageData, to: ImageData) {
+  for (let i = 0; i < to.width * to.height * 4; ++i) to.data[i] = from.data[i];
+}
 
-export interface coords {
+interface coords {
   x: number;
   y: number;
 }
 
 export class Graphics {
-  node: HTMLCanvasElement;
   renderer: CanvasRenderingContext2D;
   ctx: CanvasRenderingContext2D;
   image: ImageData;
   ar: number;
-
-  choosing: boolean;
-  polygon: Polygon;
 
   private _width: number;
   public get width(): number {
@@ -49,7 +46,6 @@ export class Graphics {
 
   constructor(renderer: CanvasRenderingContext2D, width: number) {
     this.renderer = renderer;
-    this.node = renderer.canvas;
     this.renderer.imageSmoothingEnabled = false;
 
     this.ctx = document.createElement("canvas").getContext("2d")!;
@@ -67,27 +63,42 @@ export class Graphics {
 
     this.image = this.ctx.createImageData(this.width, this.height);
 
-    this.choosing = false;
-    this.polygon = new Polygon(this);
-
-    // this.drawImageData();
-
-    this.ctx.strokeStyle = "black";
+    this.drawImageData();
   }
 
-  update() {
-    this.clearCtx();
-    this.polygon.drawEdges();
+  drawSegment(x1: number, y1: number, x2: number, y2: number, color: string) {
+    this.ctx.putImageData(this.image, 0, 0);
+
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.moveTo(x1, y1);
+    this.ctx.lineTo(x2, y2);
+    this.ctx.closePath();
+    this.ctx.stroke();
+
+    this.image = this.ctx.getImageData(0, 0, this.width, this.height);
+
+    this.drawImageData();
   }
 
   getBuf(): ImageData {
     return this.image;
   }
 
-  // putImageData(img: ImageData) {
-  //   this.image = img;
-  //   this.drawImageData();
-  // }
+  getNewBuf(): ImageData {
+    return this.ctx.createImageData(this.width, this.height);
+  }
+
+  putImageData(img: ImageData) {
+    this.image = img;
+    this.drawImageData();
+  }
+
+  addImageData(img: ImageData) {
+    sumImageData(this.image, img);
+    this.drawImageData();
+  }
 
   drawImageData() {
     this.renderer.clearRect(
@@ -112,7 +123,6 @@ export class Graphics {
   }
 
   clearCtx() {
-    this.renderer.clearRect(0, 0, this.width, this.height);
     this.ctx.clearRect(0, 0, this.width, this.height);
   }
 
@@ -125,14 +135,23 @@ export class Graphics {
     this.resizeCtx();
     this.clearCtx();
     this.image = this.ctx.createImageData(this.width, this.height);
+    this.renderer.imageSmoothingEnabled = false;
     this.drawImageData();
+  }
+
+  getDocumentCoords(x: number, y: number) {
+    let documentStuff = this.renderer.canvas.getBoundingClientRect();
+
+    let baseX = documentStuff.x;
+    let baseY = documentStuff.y;
+
+    return <coords>{
+      x: baseX + (x / this.width) * documentStuff.width,
+      y: baseY + (y / this.height) * documentStuff.height,
+    };
   }
 
   getPixelSize() {
     return this.renderer.canvas.getBoundingClientRect().width / this.width;
-  }
-
-  fill() {
-    this.polygon.getSearchLineCrossList();
   }
 }

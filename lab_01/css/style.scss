@@ -82,12 +82,21 @@ input {
     flex: 1;
   }
 
+  .tranformtext {
+    flex: 100;
+    margin: 10px 0;
+    border: none;
+    height: fit-content;
+  }
+
   .coordedit {
     flex: 1;
   }
 
   .button {
-    flex: 0.15;
+    flex: 1;
+    min-width: fit-content;
+    height: fit-content;
     &:active {
       background-color: $input-background-click;
     }
@@ -110,6 +119,15 @@ input {
       }
     }
     text-align: center;
+  }
+}
+
+canvas {
+  position: absolute;
+  background: transparent;
+  &.dark {
+    background: transparent;
+    filter: invert(1);
   }
 }
 
@@ -161,7 +179,7 @@ body {
         }
       }
 
-      .points {
+      .transformations {
         overflow-y: scroll;
       }
     }
