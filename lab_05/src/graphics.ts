@@ -1,4 +1,5 @@
 import { floor } from "./constants";
+import { out } from "./output";
 import { Polygon } from "./polygon";
 
 const canvasWidthLabel: HTMLSpanElement = document.querySelector(".c-width")!;
@@ -11,6 +12,7 @@ export interface coords {
 
 export class Graphics {
   node: HTMLCanvasElement;
+  out_renderer: CanvasRenderingContext2D;
   renderer: CanvasRenderingContext2D;
   ctx: CanvasRenderingContext2D;
   image: ImageData;
@@ -47,7 +49,13 @@ export class Graphics {
     this.resetImage();
   }
 
-  constructor(renderer: CanvasRenderingContext2D, width: number) {
+  constructor(
+    renderer: CanvasRenderingContext2D,
+    width: number,
+    outlineRenderer: CanvasRenderingContext2D
+  ) {
+    this.out_renderer = outlineRenderer;
+    this.out_renderer.lineWidth = 2;
     this.renderer = renderer;
     this.node = renderer.canvas;
     this.renderer.imageSmoothingEnabled = false;
@@ -70,13 +78,12 @@ export class Graphics {
     this.choosing = false;
     this.polygon = new Polygon(this);
 
-    // this.drawImageData();
-
     this.ctx.strokeStyle = "black";
   }
 
   update() {
     this.clearCtx();
+    this.drawImageData();
     this.polygon.drawEdges();
   }
 
@@ -84,10 +91,25 @@ export class Graphics {
     return this.image;
   }
 
-  // putImageData(img: ImageData) {
-  //   this.image = img;
-  //   this.drawImageData();
-  // }
+  putImageData(img: ImageData): void;
+  putImageData(imgPromise: Promise<ImageData>): void;
+  putImageData(imgDt: ImageData | Promise<ImageData>): void {
+    // console.log("imageData Drawing...");
+    if (imgDt instanceof ImageData) {
+      this.image = imgDt;
+      this.update();
+    } else {
+      imgDt.then(
+        (img) => {
+          this.image = img;
+          this.update();
+        },
+        (err) => {
+          throw err;
+        }
+      );
+    }
+  }
 
   drawImageData() {
     this.renderer.clearRect(
@@ -112,8 +134,8 @@ export class Graphics {
   }
 
   clearCtx() {
-    this.renderer.clearRect(0, 0, this.width, this.height);
     this.ctx.clearRect(0, 0, this.width, this.height);
+    this.out_renderer.clearRect(0, 0, this.width, this.height);
   }
 
   resetImage() {
@@ -124,7 +146,9 @@ export class Graphics {
 
     this.resizeCtx();
     this.clearCtx();
+    this.renderer.clearRect(0, 0, this.width, this.height);
     this.image = this.ctx.createImageData(this.width, this.height);
+    this.image.data.fill(0);
     this.drawImageData();
   }
 
@@ -132,7 +156,8 @@ export class Graphics {
     return this.renderer.canvas.getBoundingClientRect().width / this.width;
   }
 
-  fill() {
-    this.polygon.getSearchLineCrossList();
+  async fill(delay: number): Promise<number> {
+    if (this.image) this.image.data.fill(0);
+    return this.polygon.fill(delay);
   }
 }

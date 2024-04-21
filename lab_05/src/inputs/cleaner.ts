@@ -17,7 +17,7 @@ export default class CleanBtn {
   private setup() {
     this.node.addEventListener("click", () => {
       this.gr.polygon.clear();
-      this.gr.clearCtx();
+      this.gr.resetImage();
       this.textArea.node.value = "";
     });
   }

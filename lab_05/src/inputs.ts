@@ -4,6 +4,7 @@ import CleanBtn from "./inputs/cleaner";
 import FillBtn from "./inputs/fillbtn";
 import GraphicsListeners from "./inputs/graphicsListeners";
 import { PointsListeners, TextAreaPointsInput } from "./inputs/pointsListeners";
+import { HEXtoRGB } from "./pixels";
 import { Point, Polygon } from "./polygon";
 
 export class NumberInput {
@@ -51,10 +52,12 @@ export class ColorInput {
 export class Inputs {
   private _color: HTMLInputElement;
   private _points: HTMLTextAreaElement;
+  private _delay: HTMLInputElement;
 
   private gr: Graphics;
   private color_i: ColorInput;
   private points_i: TextAreaPointsInput;
+  private delay_i: NumberInput;
 
   canv_listeners: GraphicsListeners;
   pts_listeners: PointsListeners;
@@ -69,12 +72,16 @@ export class Inputs {
   constructor(
     color_field: HTMLInputElement,
     points_field: HTMLTextAreaElement,
+    delay_field: HTMLInputElement,
     clean_inp: HTMLInputElement,
     fill_btn: HTMLInputElement,
     canv: Graphics
   ) {
     this._color = color_field;
     this.color_i = new ColorInput(color_field);
+
+    this._delay = delay_field;
+    this.delay_i = new NumberInput(delay_field);
 
     this._points = points_field;
     this.pts_listeners = new PointsListeners(points_field, this);
@@ -85,7 +92,9 @@ export class Inputs {
 
     this.clean_listener = new CleanBtn(clean_inp, this.gr, this.points_i);
 
-    this.fill_listener = new FillBtn(fill_btn, this.gr);
+    this.fill_listener = new FillBtn(fill_btn, this.gr, this);
+
+    this._color;
   }
 
   updateCanv() {
@@ -110,5 +119,10 @@ export class Inputs {
   public get points(): Point[] {
     if (!this.points_i.validateInput()) throw new Error("Ошибка ввода точек");
     return this.points_i.value();
+  }
+
+  public get delay(): number {
+    if (!this.delay_i.validateInput()) throw new Error("Ошибка ввода задержки");
+    return this.delay_i.value();
   }
 }

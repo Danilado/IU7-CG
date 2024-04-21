@@ -1,5 +1,10 @@
 import { abs, max, min, round } from "./constants";
 import { Graphics } from "./graphics";
+import { RGBColor, xorPixel, Pixel } from "./pixels";
+
+const EPS = 1e-6;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 interface Boundaries {
   x1: number;
@@ -31,11 +36,29 @@ export class Point {
   public toString(): string {
     return `${this.x} ${this.y}`;
   }
+
+  public collinear(pt2: Point, pt3: Point): boolean {
+    return (
+      abs(
+        (this.y - pt2.y) * (this.x - pt3.x) -
+          (this.y - pt3.y) * (this.x - pt2.x)
+      ) < EPS
+    );
+  }
+
+  public equalTo(pt: Point): boolean {
+    return abs(pt.x - this.x) < EPS && abs(pt.y - this.y) < EPS;
+  }
 }
 
 export class Polygon {
   context: Graphics;
   points: Point[];
+  color: RGBColor = {
+    r: 0,
+    g: 0,
+    b: 0,
+  };
 
   constructor(graphics: Graphics, pts: Point[] = []) {
     this.context = graphics;
@@ -43,7 +66,8 @@ export class Polygon {
   }
 
   addNode(pt: Point) {
-    this.points.push(pt);
+    if (!this.points.length || !pt.equalTo(this.points[this.points.length - 1]))
+      this.points.push(pt);
   }
 
   drawEdges() {
@@ -52,21 +76,21 @@ export class Polygon {
         "Недостаточно точек для отрисовки многоугольника. Введите хотя бы три."
       );
 
-    let ctx = this.context.renderer;
+    let ctx = this.context.out_renderer;
     ctx.beginPath();
 
     let startpt: Point | undefined = undefined;
 
     for (let pt of this.points) {
       if (startpt === undefined) {
-        ctx.moveTo(pt.x, pt.y);
+        ctx.moveTo(pt.x, pt.y + 0.5);
         startpt = pt;
       } else {
-        ctx.lineTo(pt.x, pt.y);
+        ctx.lineTo(pt.x, pt.y + 0.5);
       }
     }
 
-    ctx.lineTo(startpt!.x, startpt!.y);
+    ctx.lineTo(startpt!.x, startpt!.y + 0.5);
 
     ctx.stroke();
     ctx.closePath();
@@ -75,7 +99,7 @@ export class Polygon {
   drawHelpful(cursorPos: Point) {
     if (this.points.length === 0) return;
 
-    let ctx = this.context.renderer;
+    let ctx = this.context.out_renderer;
     ctx.beginPath();
 
     let startpt: Point | undefined = undefined;
@@ -106,12 +130,32 @@ export class Polygon {
     ctx.closePath();
   }
 
-  fill(delay: number) {
-    let buf = this.context.getBuf();
+  checkOneLine() {
+    if (this.points.length < 3) throw new Error("Недостаточно точек");
+    let pt1 = this.points[0];
+    let pt2 = this.points[1];
+    if (
+      this.points.every((val) => {
+        return val.collinear(pt1, pt2);
+      })
+    )
+      throw new Error("Все точки лежат на одной прямой");
+  }
 
-    let bounds = this.getBoundaries();
+  async fill(delay: number): Promise<number> {
+    let res = new Promise<number>((resolve, reject) => {
+      if (this.points.length < 3) reject(new Error("Недостаточно точек"));
 
-    let intersections = this.getSearchLineCrossList(bounds);
+      this.checkOneLine();
+
+      let pixelBorders = this.getBorders();
+      this.xorFillSep(pixelBorders, delay).then(
+        (val) => resolve(val),
+        (err) => reject(err)
+      );
+    });
+
+    return res;
   }
 
   getBoundaries(): Boundaries {
@@ -138,7 +182,10 @@ export class Polygon {
   private getBorder(pt1: Point, pt2: Point): Point[] {
     let res: Point[] = [];
 
-    if (pt1.x == pt2.x && pt1.y == pt2.y) return [new Point(pt1.x, pt1.y)];
+    if (pt1.y == pt2.y) {
+      if (pt1.x == pt2.x) return [new Point(pt1.x, pt1.y)];
+      return [];
+    }
 
     let l = max(abs(pt2.x - pt1.x), abs(pt2.y - pt1.y));
 
@@ -157,31 +204,156 @@ export class Polygon {
     return res;
   }
 
-  private getBorderPixels(): Point[] {
-    let res: Point[] = [];
-
-    for (let i = 0; i < this.points.length - 1; ++i)
-      res = res.concat(this.getBorder(this.points[i], this.points[i + 1]));
-
-    res = res.concat(
-      this.getBorder(this.points[0], this.points[this.points.length - 1])
-    );
-
-    return res;
-  }
-
-  getSearchLineCrossList(bounds: Boundaries): Point[][] {
+  private getBorders(): Point[][] {
     if (this.points.length < 3)
       throw Error("Недостаточно точек для закраски многоугольника");
 
     let res: Point[][] = [];
 
-    for (let i = bounds.y1; i <= bounds.y2; ++i) res.push([]);
-    let intersections = this.getBorderPixels();
+    for (let i = 0; i <= this.points.length; ++i) res.push([]);
 
-    for (let pt of intersections) res[pt.y - bounds.y1].push(pt);
+    for (let i = 0; i < this.points.length - 1; ++i)
+      res[i] = this.getBorder(this.points[i], this.points[i + 1]);
+
+    res[res.length - 1] = this.getBorder(
+      this.points[this.points.length - 1],
+      this.points[0]
+    );
 
     return res;
+  }
+
+  private getSeparator(borders: Point[][]): number {
+    if (!borders.length) return 0;
+
+    let xsum = borders.reduce((acc: number, cur_border: Point[]) => {
+      return (
+        acc +
+        cur_border.reduce((acc: number, cur_pt: Point) => {
+          return acc + cur_pt.x;
+        }, 0)
+      );
+    }, 0);
+
+    return (
+      xsum /
+      borders.reduce((acc: number, cur_border: Point[]) => {
+        return acc + cur_border.length;
+      }, 0)
+    );
+  }
+
+  private thinBorderSep(
+    border: Point[],
+    prev_up?: boolean | undefined
+  ): Point[] {
+    if (!border.length) return [];
+
+    let res: Point[] = [];
+
+    if (prev_up !== undefined) {
+      if (prev_up == border[0].y < border[border.length - 1].y) {
+        let ybuf = border[0].y;
+        while (border.length && border[0].y == ybuf) border.shift();
+      }
+    }
+
+    if (!border.length) return [];
+
+    let closest_to_sep: Point = border[0];
+    let y_prev = border[0].y;
+
+    for (let pt of border) {
+      if (pt.y == y_prev) {
+        if (closest_to_sep.x < pt.x) closest_to_sep = pt;
+      } else {
+        res.push(closest_to_sep);
+
+        y_prev = pt.y;
+        closest_to_sep = pt;
+      }
+    }
+
+    if (!res.length || res[res.length - 1].y != closest_to_sep.y)
+      res.push(closest_to_sep);
+
+    return res;
+  }
+
+  private thinBordersSep(borders: Point[][]): Point[][] {
+    let res: Point[][] = [];
+    let prev_up: boolean | undefined =
+      borders[borders.length - 1][0].y <
+      borders[borders.length - 1][borders[borders.length - 1].length - 1].y;
+    for (let border of borders) {
+      if (!border.length) continue;
+
+      border = this.thinBorderSep(border, prev_up);
+      if (border.length > 1)
+        prev_up = border[0].y < border[border.length - 1].y;
+
+      // console.log(border[0].y, border[border.length - 1].y);
+
+      res.push(border);
+    }
+    return res;
+  }
+
+  private async xorFillSep(borders: Point[][], delay: number): Promise<number> {
+    let buf = this.context.getBuf();
+    let sep: number = this.getSeparator(borders);
+    let count = 0;
+
+    borders = this.thinBordersSep(borders);
+
+    let res = new Promise<number>(async (resolve) => {
+      let timestamp_start = performance.now();
+      for (let border of borders) {
+        for (let pt of border) {
+          this.xorFillLine(buf, sep, pt);
+          ++count;
+        }
+        // ПОДВИНЬТЕ ЭТОТ ИФ ВНУТРЬ ЦИКЛА, ЧТОБЫ
+        // ОТРИСОВЫВАТЬ ПРОГРЕСС ПОСЛЕ КАЖДОЙ СТРОКИ
+        if (delay) {
+          this.context.putImageData(buf);
+          await sleep(delay);
+        }
+      }
+      let timestamp_end = performance.now();
+
+      if (!delay) {
+        this.context.putImageData(buf);
+      }
+
+      resolve(timestamp_end - timestamp_start);
+    });
+
+    return res;
+  }
+
+  private xorFillLine(buf: ImageData, x_sep: number, pt: Point) {
+    if (x_sep < pt.x) {
+      for (let x: number = pt.x; x > x_sep; --x)
+        xorPixel(buf, <Pixel>{
+          x: x,
+          y: pt.y,
+          r: this.color.r,
+          g: this.color.g,
+          b: this.color.b,
+          alpha: 255,
+        });
+    } else {
+      for (let x: number = pt.x; x <= x_sep; ++x)
+        xorPixel(buf, <Pixel>{
+          x: x,
+          y: pt.y,
+          r: this.color.r,
+          g: this.color.g,
+          b: this.color.b,
+          alpha: 255,
+        });
+    }
   }
 
   clear() {
@@ -194,5 +366,9 @@ export class Polygon {
         return pt.toString();
       })
       .join("\n");
+  }
+
+  public setColor(color: RGBColor) {
+    this.color = color;
   }
 }
