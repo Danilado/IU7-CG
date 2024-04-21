@@ -4,7 +4,6 @@ import CleanBtn from "./inputs/cleaner";
 import FillBtn from "./inputs/fillbtn";
 import GraphicsListeners from "./inputs/graphicsListeners";
 import { PointsListeners, TextAreaPointsInput } from "./inputs/pointsListeners";
-import { HEXtoRGB } from "./pixels";
 import { Point, Polygon } from "./polygon";
 
 export class NumberInput {
@@ -52,7 +51,6 @@ export class ColorInput {
 export class Inputs {
   private _color: HTMLInputElement;
   private _points: HTMLTextAreaElement;
-  private _delay: HTMLInputElement;
 
   private gr: Graphics;
   private color_i: ColorInput;
@@ -80,7 +78,6 @@ export class Inputs {
     this._color = color_field;
     this.color_i = new ColorInput(color_field);
 
-    this._delay = delay_field;
     this.delay_i = new NumberInput(delay_field);
 
     this._points = points_field;

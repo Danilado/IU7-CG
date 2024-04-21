@@ -1,5 +1,4 @@
 import { floor } from "./constants";
-import { out } from "./output";
 import { Polygon } from "./polygon";
 
 const canvasWidthLabel: HTMLSpanElement = document.querySelector(".c-width")!;
