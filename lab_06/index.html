@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ЛР5</title>
+  </head>
+  <body>
+    <div class="main">
+      <div class="inputs">
+        <!--color - TODO-->
+        <div class="verbal">
+          <label for="i-color">Выбор цвета закраски</label>
+          <div class="row">
+            <input
+              type="color"
+              class="texinput"
+              placeholder="Цвет"
+              id="i-color"
+            />
+          </div>
+        </div>
+        <!--points - TODO-->
+        <div class="verbal high">
+          <div>Точки</div>
+
+          <div class="row high">
+            <textarea
+              type="textbox"
+              name=""
+              id="new-point-y"
+              placeholder="Координаты точек (через пробел, каждая - с новой строки)"
+              class="texinput"
+            ></textarea>
+          </div>
+          <div class="row">
+            Или нажимайте ЛКМ, чтобы добавить точку и ПКМ, чтобы замкнуть фигуру
+          </div>
+        </div>
+        <!--fill - TODO-->
+        <div class="verbal">
+          <div>Закраска</div>
+          <div class="row">
+            <input
+              type="text"
+              value=""
+              class="texinput"
+              placeholder="Задержка"
+              id="delay"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="Закрасить"
+              class="widebutton"
+              id="fill"
+            />
+          </div>
+        </div>
+        <!--clear - TODO-->
+        <div class="verbal">
+          <div>Очистка холста</div>
+          <div class="row">
+            <input
+              type="button"
+              value="Очистить"
+              id="clear"
+              class="widebutton"
+            />
+          </div>
+        </div>
+
+        <div class="verbal noflex" style="border: none">
+          Размеры холста:
+          <span class="c-width">N/A</span>
+          x
+          <span class="c-height">N/A</span>
+        </div>
+      </div>
+      <div class="col">
+        <div class="container">
+          <canvas id="main_canvas"> </canvas>
+          <canvas id="outline_canvas" style="pointer-events: none; z-index: 10">
+          </canvas>
+        </div>
+        <div class="footer">
+          <div class="footertext"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

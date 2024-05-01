@@ -285,6 +285,7 @@ export class Polygon {
     let prev_up: boolean | undefined =
       borders[borders.length - 1][0]?.y <
       borders[borders.length - 1][borders[borders.length - 1].length - 1]?.y;
+
     for (let border of borders) {
       if (!border.length) continue;
 
@@ -313,12 +314,12 @@ export class Polygon {
           this.xorFillLine(buf, sep, pt);
           ++count;
           if (delay) {
-            // ПОДВИНУТЬ ЭТОТ ИФ ВНУТРЬ ЦИКЛА, ЧТОБЫ
-            // ОТРИСОВЫВАТЬ ПРОГРЕСС ПОСЛЕ КАЖДОЙ СТРОКИ
             this.context.putImageData(buf);
             await sleep(delay);
           }
         }
+        // ПОДВИНЬТЕ ЭТОТ ИФ ВНУТРЬ ЦИКЛА, ЧТОБЫ
+        // ОТРИСОВЫВАТЬ ПРОГРЕСС ПОСЛЕ КАЖДОЙ СТРОКИ
       }
       let timestamp_end = performance.now();
 
