@@ -1,5 +1,8 @@
-import { floor } from "./constants";
-import { Polygon } from "./polygon";
+import { floor, sleep } from "./constants";
+import Chain from "./figures/chain";
+import Circle from "./figures/circle";
+import Point from "./figures/point";
+import { Pixel, RGBColor, cmpColros, getPixelColor, setPixel } from "./pixels";
 
 const canvasWidthLabel: HTMLSpanElement = document.querySelector(".c-width")!;
 const canvasHeightLabel: HTMLSpanElement = document.querySelector(".c-height")!;
@@ -7,6 +10,11 @@ const canvasHeightLabel: HTMLSpanElement = document.querySelector(".c-height")!;
 export interface coords {
   x: number;
   y: number;
+}
+
+function isBorder(color: RGBColor | undefined) {
+  if (color === undefined) return true;
+  return !color.r && !color.g && !color.b;
 }
 
 export class Graphics {
@@ -18,7 +26,6 @@ export class Graphics {
   ar: number;
 
   choosing: boolean;
-  polygon: Polygon;
 
   private _width: number;
   public get width(): number {
@@ -53,6 +60,13 @@ export class Graphics {
     width: number,
     outlineRenderer: CanvasRenderingContext2D
   ) {
+    let bcr = renderer.canvas.getBoundingClientRect();
+
+    renderer.canvas.width = bcr.width;
+    outlineRenderer.canvas.width = bcr.width;
+    renderer.canvas.height = bcr.height;
+    outlineRenderer.canvas.height = bcr.height;
+
     this.out_renderer = outlineRenderer;
     this.out_renderer.lineWidth = 2;
     this.renderer = renderer;
@@ -73,9 +87,9 @@ export class Graphics {
     this.width = width;
 
     this.image = this.ctx.createImageData(this.width, this.height);
+    this.image.data.fill(255);
 
     this.choosing = false;
-    this.polygon = new Polygon(this);
 
     this.ctx.strokeStyle = "black";
   }
@@ -83,7 +97,6 @@ export class Graphics {
   update() {
     this.clearCtx();
     this.drawImageData();
-    this.polygon.drawEdges();
   }
 
   getBuf(): ImageData {
@@ -147,7 +160,7 @@ export class Graphics {
     this.clearCtx();
     this.renderer.clearRect(0, 0, this.width, this.height);
     this.image = this.ctx.createImageData(this.width, this.height);
-    this.image.data.fill(0);
+    this.image.data.fill(255);
     this.drawImageData();
   }
 
@@ -155,8 +168,165 @@ export class Graphics {
     return this.renderer.canvas.getBoundingClientRect().width / this.width;
   }
 
-  async fill(delay: number): Promise<number> {
-    if (this.image) this.image.data.fill(0);
-    return this.polygon.fill(delay);
+  async fill(seed: Point, color: RGBColor, delay: number): Promise<number> {
+    let t1 = performance.now();
+
+    let stack: Array<Point> = [seed];
+
+    let buf = this.getBuf();
+    let cur: Point = new Point();
+
+    while (stack.length) {
+      cur = stack.pop()!;
+
+      setPixel(buf, <Pixel>{
+        x: cur.x,
+        y: cur.y,
+        r: color.r,
+        g: color.g,
+        b: color.b,
+        alpha: 255,
+      });
+
+      let wx = cur.x;
+      ++cur.x;
+
+      while (
+        cur.x < this.width &&
+        !isBorder(getPixelColor(buf, cur.x, cur.y))
+      ) {
+        setPixel(buf, <Pixel>{
+          x: cur.x,
+          y: cur.y,
+          r: color.r,
+          g: color.g,
+          b: color.b,
+          alpha: 255,
+        });
+        ++cur.x;
+      }
+
+      let xr = cur.x - 1;
+
+      cur.x = wx - 1;
+
+      while (cur.x >= 0 && !isBorder(getPixelColor(buf, cur.x, cur.y))) {
+        setPixel(buf, <Pixel>{
+          x: cur.x,
+          y: cur.y,
+          r: color.r,
+          g: color.g,
+          b: color.b,
+          alpha: 255,
+        });
+        --cur.x;
+      }
+
+      let xl = cur.x + 1;
+
+      cur.x = xl;
+      ++cur.y;
+
+      if (cur.y < this.height) {
+        while (cur.x <= xr) {
+          let f = false;
+
+          while (cur.x <= xr) {
+            let cur_color = getPixelColor(buf, cur.x, cur.y);
+            if (isBorder(cur_color) || cmpColros(cur_color, color)) break;
+
+            f = true;
+            ++cur.x;
+          }
+
+          if (f) {
+            let cur_color = getPixelColor(buf, cur.x, cur.y);
+            if (
+              cur.x == xr &&
+              !cmpColros(cur_color, color) &&
+              !isBorder(cur_color)
+            )
+              stack.push(new Point(cur));
+            else stack.push(new Point(cur.x - 1, cur.y));
+
+            f = false;
+          }
+
+          wx = cur.x;
+          while (cur.x < xr) {
+            let cur_color = getPixelColor(buf, cur.x, cur.y);
+            if (!cmpColros(cur_color, color) && !isBorder(cur_color)) break;
+            ++cur.x;
+          }
+
+          if (cur.x == wx) ++cur.x;
+        }
+      }
+
+      cur.x = xl;
+      cur.y -= 2;
+
+      if (cur.y >= 0) {
+        while (cur.x <= xr) {
+          let f = false;
+
+          while (cur.x <= xr) {
+            let cur_color = getPixelColor(buf, cur.x, cur.y);
+            if (cmpColros(cur_color, color) || isBorder(cur_color)) break;
+
+            f = true;
+            ++cur.x;
+          }
+
+          if (f) {
+            let cur_color = getPixelColor(buf, cur.x, cur.y);
+            if (
+              cur.x == xr &&
+              !cmpColros(cur_color, color) &&
+              !isBorder(cur_color)
+            )
+              stack.push(new Point(cur));
+            else stack.push(new Point(cur.x - 1, cur.y));
+            f = false;
+          }
+
+          wx = cur.x;
+          while (cur.x < xr) {
+            let cur_color = getPixelColor(buf, cur.x, cur.y);
+            if (!cmpColros(cur_color, color) && !isBorder(cur_color)) break;
+
+            ++cur.x;
+          }
+
+          if (cur.x == wx) ++cur.x;
+        }
+      }
+
+      if (delay) {
+        this.drawImageData();
+        await sleep(delay);
+      }
+    }
+
+    this.drawImageData();
+
+    let t2 = performance.now();
+
+    return t2 - t1;
+  }
+
+  public drawFigures(figures: Array<Circle | Chain>) {
+    this.resetImage();
+    let buf = this.getBuf();
+
+    for (let figure of figures) {
+      try {
+        figure.draw(buf);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    this.drawImageData();
   }
 }

@@ -4,6 +4,11 @@ export interface RGBColor {
   b: number;
 }
 
+export function cmpColros(c1?: RGBColor, c2?: RGBColor): boolean {
+  if ((c1 === undefined) != (c2 === undefined)) return false;
+  return c1!.r === c2!.r && c1!.g === c2!.g && c1!.b === c2!.b;
+}
+
 export function reverseString(str: string) {
   var splitString = str.split("");
   var reverseArray = splitString.reverse();
@@ -42,6 +47,23 @@ export function setPixel(buf: ImageData, pix: Pixel): void {
   buf.data[tmp + 1] = pix.g;
   buf.data[tmp + 2] = pix.b;
   buf.data[tmp + 3] = pix.alpha;
+}
+
+export function getPixelColor(
+  buf: ImageData,
+  x: number,
+  y: number
+): RGBColor | undefined {
+  if (x < 0 || x >= buf.width) return undefined;
+  if (y < 0 || y >= buf.height) return undefined;
+
+  let tmp = (x + y * buf.width) * 4;
+
+  return <RGBColor>{
+    r: buf.data[tmp],
+    g: buf.data[tmp + 1],
+    b: buf.data[tmp + 2],
+  };
 }
 
 export function xorPixel(buf: ImageData, pix: Pixel): void {
