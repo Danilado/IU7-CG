@@ -19,6 +19,9 @@ export default class App {
   delay_i: HTMLInputElement;
   color_i: HTMLInputElement;
 
+  fillx: HTMLInputElement;
+  filly: HTMLInputElement;
+
   constructor() {
     this.docff = document.querySelector("#figures")!;
 
@@ -35,6 +38,9 @@ export default class App {
     this.blockertext = document.querySelector(".blockertext")!;
     this.canv = document.querySelector("#main_canvas")!;
     this.outline_canv = document.querySelector("#outline_canvas")!;
+
+    this.fillx = document.querySelector("#fillx")!;
+    this.filly = document.querySelector("#filly")!;
 
     this.graphics = new Graphics(
       this.canv.getContext("2d")!,
@@ -58,36 +64,55 @@ export default class App {
   private setupFillListener() {
     document.querySelector("#fill")!.addEventListener("click", () => {
       let del: number = Number(this.delay_i.value);
+
+      let x_set: number = Number(this.fillx.value);
+      if (this.fillx.value == "") x_set = -1;
+      if (Number.isNaN(x_set))
+        return out.error("Ошибка ввода координаты x затравки");
+
+      let y_set: number = Number(this.filly.value);
+      if (this.filly.value == "") x_set = -1;
+      if (Number.isNaN(y_set))
+        return out.error("Ошибка ввода координаты y затравки");
+
       if (this.delay_i.value == "") del = 0;
       if (Number.isNaN(del))
         return out.error("Ошибка ввода задержки при заливке");
 
-      this.reqCanvasCoords("Выберите точку затравки\nПКМ для отмены").then(
-        (coords) => {
-          this.state = "filling";
-          this.toggleInterface(false, "Выполняется заливка");
-          this.graphics
-            .fill(coords, HEXtoRGB(this.color_i.value), del)
-            .then(
-              (time) => {
-                let s_flag = time > 1000;
-                if (time > 1000) time /= 1000;
-                out.write(`Заливка заняла ${time}${s_flag ? "c" : "мс"}`, ``);
-              },
-              (err) => {
-                out.error(err);
-              }
-            )
-            .finally(() => {
-              this.toggleInterface(true);
-              this.state = "idle";
-            });
-        },
-        (rej: Error) => {
-          out.error(rej.message);
-        }
-      );
+      if (x_set < 0)
+        this.reqCanvasCoords("Выберите точку затравки\nПКМ для отмены").then(
+          (coords) => {
+            this.fillHelper(coords, del);
+          },
+          (rej: Error) => {
+            out.error(rej.message);
+          }
+        );
+      else {
+        this.fillHelper(new Point(x_set, y_set), del);
+      }
     });
+  }
+
+  private fillHelper(coords: Point, delay: number) {
+    this.state = "filling";
+    this.toggleInterface(false, "Выполняется заливка");
+    this.graphics
+      .fill(coords, HEXtoRGB(this.color_i.value), delay)
+      .then(
+        (time) => {
+          let s_flag = time > 1000;
+          if (time > 1000) time /= 1000;
+          out.write(`Заливка заняла ${time}${s_flag ? "c" : "мс"}`, ``);
+        },
+        (err) => {
+          out.error(err);
+        }
+      )
+      .finally(() => {
+        this.toggleInterface(true);
+        this.state = "idle";
+      });
   }
 
   private setupClearListener() {
