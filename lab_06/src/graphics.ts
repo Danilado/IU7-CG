@@ -315,7 +315,7 @@ export class Graphics {
     return t2 - t1;
   }
 
-  public drawFigures(figures: Array<Circle | Chain>) {
+  public async drawFigures(figures: Array<Circle | Chain>) {
     this.resetImage();
     let buf = this.getBuf();
 
