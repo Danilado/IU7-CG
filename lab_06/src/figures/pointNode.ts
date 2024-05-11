@@ -136,7 +136,7 @@ export default class PointNode {
       throw new Error(
         `Ошибка в значении координаты x поля ввода с данными ${this.data}`
       );
-    let res_y = Number(this.x_i.value);
+    let res_y = Number(this.y_i.value);
     if (Number.isNaN(res_y))
       throw new Error(
         `Ошибка в значении координаты y поля ввода с данными ${this.data}`
