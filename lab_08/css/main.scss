@@ -1,0 +1,86 @@
+body .main {
+  display: flex;
+  flex-direction: row;
+  height: $canvas_height;
+
+  .blocker {
+    position: fixed;
+    z-index: 10;
+    background: rgba($color: #000000, $alpha: 0.5);
+    right: 0;
+    top: 0;
+    width: $canvas_width;
+    height: $canvas_height;
+    pointer-events: none;
+
+    transition: 0.2s;
+
+    .blockertext {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+
+      width: 100%;
+      text-align: center;
+      height: 3em;
+      color: white;
+      font-size: 3em;
+
+      animation: textpulse linear infinite 2s;
+    }
+
+    &.active {
+      pointer-events: all;
+      width: 100vw;
+      height: 100vh;
+    }
+  }
+
+  .container {
+    z-index: 20;
+    width: $canvas_width;
+    height: $canvas_height;
+    border-right: 1px $font-color solid;
+    overflow: hidden;
+    &.dark {
+      border-right: 1px $font-color-dark solid;
+    }
+
+    canvas {
+      z-index: inherit;
+      width: $canvas_width;
+      height: $canvas_height;
+      position: absolute;
+      background: transparent;
+      &.dark {
+        background: transparent;
+        filter: invert(1);
+      }
+
+      &#main_canvas {
+        background: $background;
+        pointer-events: none;
+      }
+
+      &#outline_canvas {
+        z-index: 25;
+        background: transparent;
+        pointer-events: all;
+      }
+    }
+  }
+}
+
+@keyframes textpulse {
+  0% {
+    color: white;
+  }
+
+  50% {
+    color: #ccc;
+  }
+
+  100% {
+    color: white;
+  }
+}

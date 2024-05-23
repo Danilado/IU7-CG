@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ЛР8</title>
+  </head>
+  <body>
+    <div class="main">
+      <div class="blocker">
+        <div class="blockertext"></div>
+      </div>
+      <div class="inputs">
+        <div class="verbal">
+          <label for="i-color-line">Выбор цвета отрезков</label>
+          <div class="row">
+            <input
+              type="color"
+              class="texinput"
+              placeholder="Цвет"
+              id="i-color-line"
+              value="#000000"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <label for="i-color-rect">Выбор цвета отсекателя</label>
+          <div class="row">
+            <input
+              type="color"
+              class="texinput"
+              placeholder="Цвет"
+              id="i-color-rect"
+              value="#0000FF"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <label for="i-color-res">Выбор цвета результата</label>
+          <div class="row">
+            <input
+              type="color"
+              class="texinput"
+              placeholder="Цвет"
+              id="i-color-res"
+              value="#FF0000"
+            />
+          </div>
+        </div>
+        <div class="verbal" id="rect-div">
+          <div>Отсекатель</div>
+        </div>
+        <div class="verbal high">
+          <div>Отрезки</div>
+          <div class="row high" id="figures"></div>
+        </div>
+        <div class="verbal">
+          <div class="row">
+            <input
+              type="button"
+              value="Добавить отрезок"
+              class="widebutton"
+              id="add_line"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div class="row">
+            <input type="button" value="Отсечь" class="widebutton" id="cut" />
+          </div>
+        </div>
+        <!--clear - TODO-->
+        <div class="verbal">
+          <div>Очистка холста</div>
+          <div class="row">
+            <input
+              type="button"
+              value="Очистить"
+              id="clear"
+              class="widebutton"
+            />
+          </div>
+        </div>
+
+        <div class="verbal noflex" style="border: none">
+          Размеры холста:
+          <span class="c-width">N/A</span>
+          x
+          <span class="c-height">N/A</span>
+        </div>
+      </div>
+      <div class="col">
+        <div class="container">
+          <canvas id="main_canvas"> </canvas>
+          <canvas id="outline_canvas"> </canvas>
+        </div>
+        <div class="footer">
+          <div class="footertext"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
