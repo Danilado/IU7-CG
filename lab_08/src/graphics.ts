@@ -1,5 +1,6 @@
 import { floor } from "./constants";
 import drawLineWu from "./figures/WuLine";
+import Chain from "./figures/chain";
 import Line from "./figures/line";
 import LineNode from "./figures/lineNode";
 import Point from "./figures/point";
@@ -224,14 +225,14 @@ export class Graphics {
     this.drawImageData();
   }
 
-  public drawRect(rectangle: Rect, lineColor?: string) {
+  public drawChain(chain: Chain, lineColor?: string) {
     let buf = this.getBuf();
     let color: RGBColor;
 
     if (lineColor !== undefined && lineColor != "") color = HEXtoRGB(lineColor);
     else color = { r: 0, g: 0, b: 0 };
 
-    rectangle.draw(buf, color);
+    chain.draw(buf, color);
 
     this.drawImageData();
   }

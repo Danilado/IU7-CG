@@ -1,3 +1,4 @@
+import { RGBColor } from "../pixels";
 import drawLineWu from "./WuLine";
 import Point from "./point";
 import PointNode from "./pointNode";
@@ -168,7 +169,7 @@ export default class Chain {
     });
   }
 
-  public draw(buf: ImageData) {
+  public draw(buf: ImageData, color: RGBColor) {
     let pts = this.getPoints();
 
     if (pts.length < 2) throw new Error("not enough points");
@@ -180,7 +181,7 @@ export default class Chain {
         pts[i].y,
         pts[i + 1].x,
         pts[i + 1].y,
-        { r: 0, g: 0, b: 0 },
+        color,
         false
       );
     }

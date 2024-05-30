@@ -1,7 +1,8 @@
 import Point from "./figures/point";
 import LineNode from "./figures/lineNode";
-import { EPS, abs, max, min } from "./constants";
+import { EPS, abs } from "./constants";
 import Line from "./figures/line";
+import Chain from "./figures/chain";
 
 const higher = parseInt("1000", 2);
 const lower = parseInt("0100", 2);
@@ -27,32 +28,12 @@ function getMask(pt: Point, cutter: Cutter): number {
   return res;
 }
 
-function rectToCutter(rect: Rect): Cutter {
-  try {
-    rect._pt1.validate();
-    rect._pt2.validate();
-  } catch (_err) {
-    throw new Error("Ошибка ввода углов отсекателя");
-  }
-
-  return <Cutter>{
-    xl: min(rect.x1, rect.x2),
-    xr: max(rect.x1, rect.x2),
-    yt: min(rect.y1, rect.y2),
-    yb: max(rect.y1, rect.y2),
-  };
-}
-
-export function getCutLine(cutter: Rect, line: LineNode | Line): Line | null;
-export function getCutLine(cutter: Cutter, line: LineNode | Line): Line | null;
+export function getCutLine(cutter: Chain, line: LineNode | Line): Line | null;
+// export function getCutLine(cutter: Cutter, line: LineNode | Line): Line | null;
 export function getCutLine(
-  cutter: Cutter | Rect,
+  cutter: Cutter | Chain,
   line: LineNode | Line
 ): Line | null {
-  if (cutter instanceof Rect) {
-    cutter = rectToCutter(cutter);
-  }
-
   let _cutter: Cutter = cutter as Cutter;
 
   let pt1: Point = line.pt1;
