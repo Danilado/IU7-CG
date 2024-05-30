@@ -51,9 +51,7 @@ export default class App {
     document.querySelector("#cut")!.addEventListener("click", () => {
       try {
         if (!checkConvexityPolygon(this.ff.chain.getPoints()))
-          throw new Error(
-            "Отсекатель не выпуклый или не имеет менее трёх точек"
-          );
+          throw new Error("Отсекатель не выпуклый или имеет менее трёх точек");
 
         let cutLines = getCutLines(this.ff.chain.getPoints(), this.ff.lines);
         console.log(cutLines);
