@@ -1,164 +1,118 @@
 import Point from "./figures/point";
 import LineNode from "./figures/lineNode";
-import { EPS, abs } from "./constants";
 import Line from "./figures/line";
-import Chain from "./figures/chain";
+import { EPS, abs, max, min } from "./constants";
 
-const higher = parseInt("1000", 2);
-const lower = parseInt("0100", 2);
-const right = parseInt("0010", 2);
-const left = parseInt("0001", 2);
-
-export interface Cutter {
-  xl: number;
-  xr: number;
-  yt: number;
-  yb: number;
+function scalarMul(vec1: Point, vec2: Point): number {
+  return vec1.x * vec2.x + vec1.y * vec2.y;
 }
 
-function getMask(pt: Point, cutter: Cutter): number {
-  let res: number = 0;
-
-  if (pt.x < cutter.xl) res += left;
-  else if (pt.x > cutter.xr) res += right;
-
-  if (pt.y < cutter.yt) res += higher;
-  else if (pt.y > cutter.yb) res += lower;
-
-  return res;
+function vectorMul(vec1: Point, vec2: Point): number {
+  return vec1.x * vec2.y - vec1.y * vec2.x;
 }
 
-export function getCutLine(cutter: Chain, line: LineNode | Line): Line | null;
-// export function getCutLine(cutter: Cutter, line: LineNode | Line): Line | null;
+function getDirectrice(vec1: Point, vec2: Point): Point {
+  return new Point(vec2.x - vec1.x, vec2.y - vec1.y);
+}
+
+export function checkConvexityPolygon(cutter: Array<Point>): boolean {
+  if (cutter.length < 3) return false;
+
+  let vec1 = getDirectrice(cutter[0], cutter[1]);
+  let vec2 = getDirectrice(cutter[1], cutter[2]);
+
+  let sign = vectorMul(vec1, vec2) > 0 ? 1 : -1;
+
+  let clen = cutter.length;
+  for (let i = 0; i < cutter.length; ++i) {
+    let vec1 = getDirectrice(cutter[i], cutter[(i + 1) % clen]);
+    let vec2 = getDirectrice(cutter[(i + 1) % clen], cutter[(i + 2) % clen]);
+
+    if (sign * vectorMul(vec1, vec2) < 0) return false;
+  }
+
+  if (sign < 0) cutter = cutter.reverse();
+
+  return true;
+}
+
+function getNormal(pt1: Point, pt2: Point, pt3: Point): Point {
+  let vec = new Point(pt2.x - pt1.x, pt2.y - pt1.y);
+
+  let normal = new Point();
+
+  if (abs(vec.y) > EPS) {
+    normal.x = 1;
+    normal.y = -vec.x / vec.y;
+  } else {
+    normal.y = 1;
+    normal.x = 0;
+  }
+
+  if (scalarMul(new Point(pt3.x - pt2.x, pt3.y - pt2.y), normal) < 0) {
+    normal.x *= -1;
+    normal.y *= -1;
+  }
+
+  return normal;
+}
+
 export function getCutLine(
-  cutter: Cutter | Chain,
+  cutter: Array<Point>,
   line: LineNode | Line
 ): Line | null {
-  let _cutter: Cutter = cutter as Cutter;
+  let m = cutter.length;
+  if (m < 3) return null;
 
-  let pt1: Point = line.pt1;
-  let pt2: Point = line.pt2;
+  let t_beg = 0;
+  let t_end = 1;
 
-  let T1 = getMask(pt1, _cutter);
-  let T2 = getMask(pt2, _cutter);
-  let line_tan = 1e30;
+  // direction vector
+  let d = new Point(line.x2 - line.x1, line.y2 - line.y1);
 
-  if (!T1 && !T2) return new Line(pt1, pt2);
-  if (T1 & T2) return null;
+  for (let i = 0; i < cutter.length; ++i) {
+    let normal = getNormal(cutter[i], cutter[(i + 1) % m], cutter[(i + 2) % m]);
 
-  let r1: Point;
-  let r2: Point;
-  let q: Point;
-  let i: number = 0;
+    let w = new Point(line.x1 - cutter[i].x, line.y1 - cutter[i].y);
 
-  if (!T1) {
-    r1 = pt1;
-    q = pt2;
-    i = 2;
-    return determineLinePosition();
-  }
+    let d_scalar = scalarMul(d, normal);
+    let w_scalar = scalarMul(w, normal);
 
-  if (!T2) {
-    r1 = pt2;
-    q = pt1;
-    i = 2;
-    return determineLinePosition();
-  }
-
-  return nextIteration();
-
-  // 12
-  function nextIteration(): Line | null {
-    ++i;
-    if (i > 2) return new Line(r1!, r2!);
-    q = i == 1 ? pt1 : pt2;
-
-    return determineLinePosition();
-  }
-
-  // 15
-  function determineLinePosition(): Line | null {
-    if (pt1.x == pt2.x) return handleVertical();
-
-    line_tan = (pt2.y - pt1.y) / (pt2.x - pt1.x);
-
-    if (q.x > _cutter.xl) return checkRightIntersection();
-
-    let yp = line_tan * (_cutter.xl - q.x) + q.y;
-    if (yp >= _cutter.yt && yp <= _cutter.yb) {
-      if (i == 1) {
-        r1 = new Point(_cutter.xl, yp);
-      } else {
-        r2 = new Point(_cutter.xl, yp);
-      }
-      return nextIteration();
+    if (abs(d_scalar) < EPS) {
+      if (w_scalar < EPS) return null;
+      continue;
     }
 
-    return checkRightIntersection();
-  }
+    let t = -w_scalar / d_scalar;
 
-  // 20
-  function checkRightIntersection(): Line | null {
-    if (q.x < _cutter.xr) return handleVertical();
-
-    let yp = line_tan * (_cutter.xr - q.x) + q.y;
-    if (yp >= _cutter.yt && yp <= _cutter.yb) {
-      if (i == 1) {
-        r1 = new Point(_cutter.xr, yp);
-      } else {
-        r2 = new Point(_cutter.xr, yp);
-      }
-      return nextIteration();
+    if (d_scalar > 0) {
+      if (t - 1 <= EPS)
+        // t <= 1
+        t_beg = max(t_beg, t);
+      else return null;
+    } else if (d_scalar < 0) {
+      if (t >= -EPS)
+        // t >= 0
+        t_end = min(t_end, t);
+      else return null;
     }
 
-    return handleVertical();
+    if (t_beg > t_end) return null;
   }
 
-  // 23
-  function handleVertical(): Line | null {
-    if (abs(line_tan) < EPS) return nextIteration();
-
-    if (q.y > _cutter.yt) return checkBottomIntersetion();
-    let xp = (_cutter.yt - q.y) / line_tan + q.x;
-    if (xp <= _cutter.xr && xp >= _cutter.xl) {
-      if (i == 1) {
-        r1 = new Point(xp, _cutter.yt);
-      } else {
-        r2 = new Point(xp, _cutter.yt);
-      }
-      return nextIteration();
-    }
-
-    return checkBottomIntersetion();
-  }
-
-  // 27
-  function checkBottomIntersetion(): Line | null {
-    if (q.y < _cutter.yb) return null;
-
-    let xp = (_cutter.yb - q.y) / line_tan + q.x;
-    if (xp <= _cutter.xr && xp >= _cutter.xl) {
-      if (i == 1) {
-        r1 = new Point(xp, _cutter.yb);
-      } else {
-        r2 = new Point(xp, _cutter.yb);
-      }
-      return nextIteration();
-    }
-
-    return null;
-  }
+  return new Line(
+    new Point(line.x1 + d.x * t_beg, line.y1 + d.y * t_beg),
+    new Point(line.x1 + d.x * t_end, line.y1 + d.y * t_end)
+  );
 }
 
-export function getCutLines(cutter: Rect, lines: LineNode[]): Line[] {
+export function getCutLines(cutter: Array<Point>, lines: LineNode[]): Line[] {
   let res: Line[] = [];
   if (!lines.length) return res;
 
-  let _cutter = rectToCutter(cutter);
-
   return lines
     .map((lnode: LineNode) => {
-      return getCutLine(_cutter, lnode);
+      return getCutLine(cutter, lnode);
     })
     .filter((val: Line | null) => {
       return val instanceof Line;

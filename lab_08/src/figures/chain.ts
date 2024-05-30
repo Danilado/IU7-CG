@@ -21,11 +21,6 @@ class ChainNodeBuilder {
     let cont_btn = this.buildWideBtn(cont_row);
     cont_btn.id = "cont";
     cont_btn.value = "продолжить кликами";
-
-    let close_row = this.buildRow(parent);
-    let close_btn = this.buildWideBtn(close_row);
-    close_btn.id = "close";
-    close_btn.value = "замкнуть";
   }
 
   private static buildRow(parent: HTMLDivElement): HTMLDivElement {
@@ -79,7 +74,6 @@ export default class Chain {
   private setupListeners() {
     this.setupAddPointListener();
     this.setupContListener();
-    this.setupCloseListener();
     this.setupMainListeners();
   }
 
@@ -124,14 +118,6 @@ export default class Chain {
     this.points.push(new_point);
 
     this.pts_node.scroll(0, this.pts_node.scrollHeight);
-  }
-
-  private setupCloseListener() {
-    let node = this.node.querySelector("#close")!;
-    node.addEventListener("click", () => {
-      this.addPoint(this.points[0].pt);
-      this.dispatchUpdate();
-    });
   }
 
   private setupMainListeners() {
@@ -185,5 +171,15 @@ export default class Chain {
         false
       );
     }
+
+    drawLineWu(
+      buf,
+      pts[pts.length - 1].x,
+      pts[pts.length - 1].y,
+      pts[0].x,
+      pts[0].y,
+      color,
+      false
+    );
   }
 }

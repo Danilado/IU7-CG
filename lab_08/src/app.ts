@@ -1,7 +1,7 @@
 import { errHandler, getClickCoords } from "./constants";
 import Point from "./figures/point";
 import FigureField from "./figuresField";
-import { getCutLines } from "./getCutLine";
+import { checkConvexityPolygon, getCutLines } from "./getCutLine";
 import { Graphics } from "./graphics";
 
 export default class App {
@@ -50,7 +50,12 @@ export default class App {
     const resColorI: HTMLInputElement = document.querySelector("#i-color-res")!;
     document.querySelector("#cut")!.addEventListener("click", () => {
       try {
-        let cutLines = getCutLines(this.ff.chain, this.ff.lines);
+        if (!checkConvexityPolygon(this.ff.chain.getPoints()))
+          throw new Error(
+            "Отсекатель не выпуклый или не имеет менее трёх точек"
+          );
+
+        let cutLines = getCutLines(this.ff.chain.getPoints(), this.ff.lines);
         console.log(cutLines);
         this.graphics.drawLines(cutLines, resColorI.value);
       } catch (err) {
