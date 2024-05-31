@@ -67,30 +67,33 @@ export function getCutLine(
   let t_beg = 0;
   let t_end = 1;
 
-  // direction vector
+  // директрисса
   let d = new Point(line.x2 - line.x1, line.y2 - line.y1);
 
   for (let i = 0; i < cutter.length; ++i) {
     let normal = getNormal(cutter[i], cutter[(i + 1) % m], cutter[(i + 2) % m]);
 
+    // Вектор от начала отрезка до произвольной точки i-го ребра. Берём начало, так проще
     let w = new Point(line.x1 - cutter[i].x, line.y1 - cutter[i].y);
 
     let d_scalar = scalarMul(d, normal);
     let w_scalar = scalarMul(w, normal);
 
     if (abs(d_scalar) < EPS) {
-      if (w_scalar < EPS) return null;
+      if (w_scalar < EPS) return null; // отрезок вырожденный
       continue;
     }
 
     let t = -w_scalar / d_scalar;
 
     if (d_scalar > 0) {
+      // точка ближе к концу отрезка
       if (t - 1 <= EPS)
         // t <= 1
         t_beg = max(t_beg, t);
       else return null;
     } else if (d_scalar < 0) {
+      // точка ближе к началу отрезка
       if (t >= -EPS)
         // t >= 0
         t_end = min(t_end, t);
