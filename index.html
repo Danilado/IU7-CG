@@ -3,18 +3,108 @@
   <head>
     <meta charset="UTF-8" />
     <title>Компьютерная графика</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        margin-top: 40px;
+        color: #333;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        max-width: 600px;
+        width: 90%;
+      }
+
+      li {
+        background-color: #fff;
+        margin: 10px 0;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      li:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      }
+
+      a {
+        text-decoration: none;
+        color: #007acc;
+        font-size: 18px;
+        font-weight: bold;
+      }
+
+      p {
+        margin: 5px 0 0 0;
+        font-size: 14px;
+        color: #555;
+      }
+    </style>
   </head>
   <body>
     <h1>Лабораторные по компьютерной графике</h1>
     <ul>
-      <li><a href="lab_01/">Лабораторная 1</a></li>
-      <li><a href="lab_02/">Лабораторная 2</a></li>
-      <li><a href="lab_03/">Лабораторная 3</a></li>
-      <li><a href="lab_04/">Лабораторная 4</a></li>
-      <li><a href="lab_05/">Лабораторная 5</a></li>
-      <li><a href="lab_06/">Лабораторная 6</a></li>
-      <li><a href="lab_07/">Лабораторная 7</a></li>
-      <li><a href="lab_08/">Лабораторная 8</a></li>
+      <a href="lab_01/">
+        <li>
+          Лабораторная 1
+          <p>Треугольники и окружность.</p>
+        </li>
+      </a>
+      <a href="lab_02/">
+        <li>
+          Лабораторная 2
+          <p>Аффинные трансформации.</p>
+        </li>
+      </a>
+      <a href="lab_03/">
+        <li>
+          Лабораторная 3
+          <p>Построение отрезков.</p>
+        </li>
+      </a>
+      <a href="lab_04/">
+        <li>
+          Лабораторная 4
+          <p>Окружности и эллипсы.</p>
+        </li>
+      </a>
+      <a href="lab_05/">
+        <li>
+          Лабораторная 5
+          <p>Алгоритм заполнения с перегородкой.</p>
+        </li>
+      </a>
+      <a href="lab_06/">
+        <li>
+          Лабораторная 6
+          <p>Затравочное заполнение.</p>
+        </li>
+      </a>
+      <a href="lab_07/">
+        <li>
+          Лабораторная 7
+          <p>Отсечение прямоугольным отсекателем.</p>
+        </li>
+      </a>
+      <a href="lab_08/">
+        <li>
+          Лабораторная 8
+          <p>Отсечение выпуклым отсекателем.</p>
+        </li>
+      </a>
     </ul>
   </body>
 </html>
