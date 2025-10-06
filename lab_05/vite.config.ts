@@ -5,7 +5,7 @@ export default defineConfig({
   build: {
     outDir: "./dist",
   },
-  base: "./",
+  base: "/IU7-CG/lab_05/",
   server: {
     https: false,
   },

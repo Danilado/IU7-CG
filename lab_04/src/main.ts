@@ -1,4 +1,4 @@
-import "../css/style.css";
+import "../css/style.scss";
 
 import { pointer_x } from "./labels";
 import { Graphics } from "./graphics";
@@ -31,18 +31,8 @@ import {
 } from "./inputs";
 import { RUN_COUNT, R_END, R_START, R_STEP, m, out, round } from "./constants";
 import { HEXtoRGB, RGBColor } from "./pixels";
-import {
-  buildCircleCanonical,
-  buildCircleParametric,
-  buildCircleBresenham,
-  buildCircleMidpoint,
-} from "./circle";
-import {
-  buildEllipseCanonical,
-  buildEllipseParametric,
-  buildEllipseBresenham,
-  buildEllipseMidpoint,
-} from "./ellipse";
+import { buildCircleCanonical, buildCircleParametric, buildCircleBresenham, buildCircleMidpoint } from "./circle";
+import { buildEllipseCanonical, buildEllipseParametric, buildEllipseBresenham, buildEllipseMidpoint } from "./ellipse";
 
 import Chart from "chart.js/auto";
 
@@ -54,20 +44,13 @@ const main_canvas: HTMLCanvasElement = document.querySelector("#main_canvas")!;
 main_canvas.width = main_canvas.getBoundingClientRect().width;
 main_canvas.height = main_canvas.getBoundingClientRect().height;
 
-const main_canv = new Graphics(
-  main_canvas.getContext("2d")!,
-  main_canvas.width
-);
+const main_canv = new Graphics(main_canvas.getContext("2d")!, main_canvas.width);
 
 //#region interact
 
 function movePtrs() {
-  let x1 = center_x_input.validateInput()
-    ? center_x_input.value(0, main_canv.width - 1)
-    : 0;
-  let y1 = center_y_input.validateInput()
-    ? center_y_input.value(0, main_canv.height - 1)
-    : 0;
+  let x1 = center_x_input.validateInput() ? center_x_input.value(0, main_canv.width - 1) : 0;
+  let y1 = center_y_input.validateInput() ? center_y_input.value(0, main_canv.height - 1) : 0;
 
   let tmp1 = main_canv.getDocumentCoords(x1, y1);
 
@@ -99,10 +82,8 @@ function getChosenAlgIndex() {
 
 btn_side.addEventListener("click", () => {
   clearGraph();
-  if (!side_input.validateInput())
-    return out.error("Ошибка ввода ширины холста");
-  if (side_input.value() < 10)
-    return out.error("Нельзя ввести ширину холста меньше 10 пикселей");
+  if (!side_input.validateInput()) return out.error("Ошибка ввода ширины холста");
+  if (side_input.value() < 10) return out.error("Нельзя ввести ширину холста меньше 10 пикселей");
 
   main_canv.width = side_input.value();
   movePtrs();
@@ -114,16 +95,12 @@ btn_clear_image.addEventListener("click", () => {
 });
 
 function buildCircleFromInputs() {
-  if (!center_x_input.validateInput())
-    return out.error(`Ошибка ввода кординаты x центра фигуры`);
-  if (!center_y_input.validateInput())
-    return out.error(`Ошибка ввода кординаты y центра фигуры`);
+  if (!center_x_input.validateInput()) return out.error(`Ошибка ввода кординаты x центра фигуры`);
+  if (!center_y_input.validateInput()) return out.error(`Ошибка ввода кординаты y центра фигуры`);
   let r;
-  if (!circle_r_input.validateInput())
-    return out.error(`Ошибка ввода радиуса окружности`);
+  if (!circle_r_input.validateInput()) return out.error(`Ошибка ввода радиуса окружности`);
   r = circle_r_input.value();
-  if (r < 0)
-    return out.error(`Ошибка: Радиус окружности не может быть меньше нуля`);
+  if (r < 0) return out.error(`Ошибка: Радиус окружности не может быть меньше нуля`);
 
   let cx = center_x_input.value();
   let cy = center_y_input.value();
@@ -169,9 +146,7 @@ function buildCircle(
     // case(0):{}break;
     default:
       {
-        out.error(
-          "Ошибка: Выбранный алгоритм рисования не определён или ещё не реализован"
-        );
+        out.error("Ошибка: Выбранный алгоритм рисования не определён или ещё не реализован");
       }
       break;
   }
@@ -184,17 +159,13 @@ btn_build_circle.addEventListener("click", () => {
 });
 
 function buildEllipseFromInputs() {
-  if (!center_x_input.validateInput())
-    return out.error(`Ошибка ввода кординаты x центра фигуры`);
-  if (!center_y_input.validateInput())
-    return out.error(`Ошибка ввода кординаты y центра фигуры`);
+  if (!center_x_input.validateInput()) return out.error(`Ошибка ввода кординаты x центра фигуры`);
+  if (!center_y_input.validateInput()) return out.error(`Ошибка ввода кординаты y центра фигуры`);
 
-  if (!ellipse_r_x_input.validateInput())
-    return out.error(`Ошибка ввода полуоси x эллипса`);
+  if (!ellipse_r_x_input.validateInput()) return out.error(`Ошибка ввода полуоси x эллипса`);
   let rx = ellipse_r_x_input.value();
   if (rx < 0) return out.error(`Ошибка: Полуось x эллипса меньше 0`);
-  if (!ellipse_r_y_input.validateInput())
-    return out.error(`Ошибка ввода полуоси y эллипса`);
+  if (!ellipse_r_y_input.validateInput()) return out.error(`Ошибка ввода полуоси y эллипса`);
   let ry = ellipse_r_y_input.value();
   if (ry < 0) return out.error(`Ошибка: Полуось y эллипса меньше 0`);
 
@@ -242,9 +213,7 @@ function buildEllipse(
     // case(0):{}break;
     default:
       {
-        out.error(
-          "Ошибка: Выбранный алгоритм рисования не определён или ещё не реализован"
-        );
+        out.error("Ошибка: Выбранный алгоритм рисования не определён или ещё не реализован");
       }
       break;
   }
@@ -294,10 +263,8 @@ function getCircSpectrumRads4(rend: number, rstep: number, ramount: number) {
 
 btn_build_circ_spectrum.addEventListener("click", () => {
   clearGraph();
-  if (!center_x_input.validateInput())
-    return out.error(`Ошибка ввода кординаты x центра фигуры`);
-  if (!center_y_input.validateInput())
-    return out.error(`Ошибка ввода кординаты y центра фигуры`);
+  if (!center_x_input.validateInput()) return out.error(`Ошибка ввода кординаты x центра фигуры`);
+  if (!center_y_input.validateInput()) return out.error(`Ошибка ввода кординаты y центра фигуры`);
 
   let cx = center_x_input.value();
   let cy = center_y_input.value();
@@ -321,10 +288,8 @@ btn_build_circ_spectrum.addEventListener("click", () => {
   let r_a = circ_spectrum_amount_input.value();
 
   if (circ_b && circ_e && circ_s) rads = getCircSpectrumRads1(r_b, r_e, r_s);
-  else if (circ_b && circ_e && circ_a)
-    rads = getCircSpectrumRads2(r_b, r_e, r_a);
-  else if (circ_b && circ_s && circ_a)
-    rads = getCircSpectrumRads3(r_b, r_s, r_a);
+  else if (circ_b && circ_e && circ_a) rads = getCircSpectrumRads2(r_b, r_e, r_a);
+  else if (circ_b && circ_s && circ_a) rads = getCircSpectrumRads3(r_b, r_s, r_a);
   else rads = getCircSpectrumRads4(r_e, r_s, r_a);
 
   let i = getChosenAlgIndex();
@@ -339,12 +304,7 @@ btn_build_circ_spectrum.addEventListener("click", () => {
   main_canv.drawImageData();
 });
 
-function getElRadsSpectrum(
-  rx_s: number,
-  ry_s: number,
-  step_rx: number,
-  amount: number
-) {
+function getElRadsSpectrum(rx_s: number, ry_s: number, step_rx: number, amount: number) {
   let res: number[][] = [];
 
   let rx = rx_s;
@@ -363,10 +323,8 @@ function getElRadsSpectrum(
 
 btn_build_el_spectrum.addEventListener("click", () => {
   clearGraph();
-  if (!center_x_input.validateInput())
-    return out.error(`Ошибка ввода кординаты x центра фигуры`);
-  if (!center_y_input.validateInput())
-    return out.error(`Ошибка ввода кординаты y центра фигуры`);
+  if (!center_x_input.validateInput()) return out.error(`Ошибка ввода кординаты x центра фигуры`);
+  if (!center_y_input.validateInput()) return out.error(`Ошибка ввода кординаты y центра фигуры`);
 
   let cx = center_x_input.value();
   let cy = center_y_input.value();
@@ -374,27 +332,20 @@ btn_build_el_spectrum.addEventListener("click", () => {
   let rgbc = HEXtoRGB(color);
   let buf = main_canv.getBuf();
 
-  if (!el_spectrum_rx_start_input.validateInput())
-    return out.error(`Ошибка ввода полуоси x эллипса`);
+  if (!el_spectrum_rx_start_input.validateInput()) return out.error(`Ошибка ввода полуоси x эллипса`);
   let rx1 = el_spectrum_rx_start_input.value();
-  if (rx1 < 0)
-    return out.error(`Ошибка: Начальное значение полуоси x эллипса меньше 0`);
+  if (rx1 < 0) return out.error(`Ошибка: Начальное значение полуоси x эллипса меньше 0`);
 
-  if (!el_spectrum_ry_start_input.validateInput())
-    return out.error(`Ошибка ввода полуоси y эллипса`);
+  if (!el_spectrum_ry_start_input.validateInput()) return out.error(`Ошибка ввода полуоси y эллипса`);
   let ry1 = el_spectrum_ry_start_input.value();
-  if (ry1 < 0)
-    return out.error(`Ошибка: Начальное значение полуоси y эллипса меньше 0`);
+  if (ry1 < 0) return out.error(`Ошибка: Начальное значение полуоси y эллипса меньше 0`);
 
-  if (!el_spectrum_r_step_input.validateInput())
-    return out.error(`Ошибка чтения шага роста полуосей эллипса`);
+  if (!el_spectrum_r_step_input.validateInput()) return out.error(`Ошибка чтения шага роста полуосей эллипса`);
   let rstep = el_spectrum_r_step_input.value();
 
-  if (!el_spectrum_r_amount_input.validateInput())
-    return out.error("Ошибка чтения количества эллипсов");
+  if (!el_spectrum_r_amount_input.validateInput()) return out.error("Ошибка чтения количества эллипсов");
   let amount = el_spectrum_r_amount_input.value();
-  if (amount <= 0)
-    return out.error("Ошибка: Количество эллипсов должно быть больше нуля");
+  if (amount <= 0) return out.error("Ошибка: Количество эллипсов должно быть больше нуля");
 
   let i = getChosenAlgIndex();
   if (i != 0) {
@@ -405,15 +356,7 @@ btn_build_el_spectrum.addEventListener("click", () => {
   let radpairs: number[][] = getElRadsSpectrum(rx1, ry1, rstep, amount);
 
   for (let radpair of radpairs) {
-    buildEllipse(
-      buf!,
-      cx,
-      cy,
-      radpair[0],
-      radpair[1],
-      i,
-      i == 0 ? color : rgbc
-    );
+    buildEllipse(buf!, cx, cy, radpair[0], radpair[1], i, i == 0 ? color : rgbc);
   }
 
   main_canv.drawImageData();
@@ -428,16 +371,8 @@ const measure_canvas: HTMLCanvasElement = document.createElement("canvas");
 measure_canvas.width = 10000;
 measure_canvas.height = 10000;
 const measure_ctx: CanvasRenderingContext2D = measure_canvas.getContext("2d")!;
-let measure_buf = measure_ctx.createImageData(
-  main_canv.width,
-  main_canv.height
-);
-const circle_algs = [
-  buildCircleCanonical,
-  buildCircleParametric,
-  buildCircleBresenham,
-  buildCircleMidpoint,
-];
+let measure_buf = measure_ctx.createImageData(main_canv.width, main_canv.height);
+const circle_algs = [buildCircleCanonical, buildCircleParametric, buildCircleBresenham, buildCircleMidpoint];
 
 let radiuses: number[] = [];
 for (let r = R_START; r <= R_END; r += R_STEP) radiuses.push(r);
@@ -461,8 +396,7 @@ btn_build_graphs_circle.addEventListener("click", () => {
   for (let alg of circle_algs) {
     for (let r of radiuses) {
       let t1 = performance.now();
-      for (let _ = 0; _ < RUN_COUNT; ++_)
-        alg(measure_buf, 0, 0, r, <RGBColor>{ r: 0, g: 0, b: 0 }, true);
+      for (let _ = 0; _ < RUN_COUNT; ++_) alg(measure_buf, 0, 0, r, <RGBColor>{ r: 0, g: 0, b: 0 }, true);
       let t2 = performance.now();
       times[i].push(t2 - t1);
     }
@@ -487,12 +421,7 @@ btn_build_graphs_circle.addEventListener("click", () => {
   });
 });
 
-const ellipse_algs = [
-  buildEllipseCanonical,
-  buildEllipseParametric,
-  buildEllipseBresenham,
-  buildEllipseMidpoint,
-];
+const ellipse_algs = [buildEllipseCanonical, buildEllipseParametric, buildEllipseBresenham, buildEllipseMidpoint];
 
 btn_build_graphs_ellipse.addEventListener("click", () => {
   clearGraph();
@@ -513,8 +442,7 @@ btn_build_graphs_ellipse.addEventListener("click", () => {
   for (let alg of ellipse_algs) {
     for (let r of radiuses) {
       let t1 = performance.now();
-      for (let _ = 0; _ < RUN_COUNT; ++_)
-        alg(measure_buf, 0, 0, r, r, <RGBColor>{ r: 0, g: 0, b: 0 }, true);
+      for (let _ = 0; _ < RUN_COUNT; ++_) alg(measure_buf, 0, 0, r, r, <RGBColor>{ r: 0, g: 0, b: 0 }, true);
       let t2 = performance.now();
       times[i].push(t2 - t1);
     }

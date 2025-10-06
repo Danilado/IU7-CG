@@ -2,24 +2,14 @@ import { RENDER_SCALE } from "./constants";
 import { Point, toPrecision, toDeg } from "./geometry";
 import { Graphics } from "./graphics";
 
-export const bg_canvas: HTMLCanvasElement =
-  document.querySelector("#staticPlane")!;
-export const fg_canvas: HTMLCanvasElement =
-  document.querySelector("#dynamicPlane")!;
+export const bg_canvas: HTMLCanvasElement = document.querySelector("#staticPlane")!;
+export const fg_canvas: HTMLCanvasElement = document.querySelector("#dynamicPlane")!;
 
-fg_canvas.width = Math.round(
-  fg_canvas.getBoundingClientRect().width * RENDER_SCALE
-);
-fg_canvas.height = Math.round(
-  fg_canvas.getBoundingClientRect().height * RENDER_SCALE
-);
+fg_canvas.width = Math.round(fg_canvas.getBoundingClientRect().width * RENDER_SCALE);
+fg_canvas.height = Math.round(fg_canvas.getBoundingClientRect().height * RENDER_SCALE);
 
-bg_canvas.width = Math.round(
-  fg_canvas.getBoundingClientRect().width * RENDER_SCALE
-);
-bg_canvas.height = Math.round(
-  fg_canvas.getBoundingClientRect().height * RENDER_SCALE
-);
+bg_canvas.width = Math.round(fg_canvas.getBoundingClientRect().width * RENDER_SCALE);
+bg_canvas.height = Math.round(fg_canvas.getBoundingClientRect().height * RENDER_SCALE);
 
 export const fg_ctx: CanvasRenderingContext2D = fg_canvas.getContext("2d")!;
 export const bg_ctx: CanvasRenderingContext2D = bg_canvas.getContext("2d")!;
@@ -36,8 +26,6 @@ export class Transformation {
     this.activated = true;
     this._buildNode();
   }
-
-  apply(graph: Graphics) {}
 
   getPoint(): Point | null {
     return null;
@@ -168,14 +156,7 @@ export class TranslateTransformation extends Transformation {
 
   apply(graph: Graphics): void {
     if (!this.activated) return;
-    graph.context.transform(
-      1,
-      0,
-      0,
-      1,
-      this.translation.x * graph.scale,
-      this.translation.y * graph.scale
-    );
+    graph.context.transform(1, 0, 0, 1, this.translation.x * graph.scale, this.translation.y * graph.scale);
   }
 
   transformPoint(pt: Point): Point {

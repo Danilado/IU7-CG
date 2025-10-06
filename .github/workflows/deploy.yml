@@ -1,0 +1,61 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install dependencies for all labs
+      run: |
+        cd lab_01 && npm install && cd ..
+        cd lab_02 && npm install && cd ..
+        cd lab_03 && npm install && cd ..
+        cd lab_04 && npm install && cd ..
+        cd lab_05 && npm install && cd ..
+        cd lab_06 && npm install && cd ..
+        cd lab_07 && npm install && cd ..
+        cd lab_08 && npm install && cd ..
+
+    - name: Build all labs
+      run: |
+        cd lab_01 && npm run build && cd ..
+        cd lab_02 && npm run build && cd ..
+        cd lab_03 && npm run build && cd ..
+        cd lab_04 && npm run build && cd ..
+        cd lab_05 && npm run build && cd ..
+        cd lab_06 && npm run build && cd ..
+        cd lab_07 && npm run build && cd ..
+        cd lab_08 && npm run build && cd ..
+
+    - name: Prepare deployment folder
+      run: |
+        mkdir build
+        cp -r lab_01/dist build/lab_01
+        cp -r lab_02/dist build/lab_02
+        cp -r lab_03/dist build/lab_03
+        cp -r lab_04/dist build/lab_04
+        cp -r lab_05/dist build/lab_05
+        cp -r lab_06/dist build/lab_06
+        cp -r lab_07/dist build/lab_07
+        cp -r lab_08/dist build/lab_08
+        cp index.html build/
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.PAT_TOKEN }}
+        publish_dir: ./build
+        publish_branch: gh-pages
