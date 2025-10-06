@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ЛР1</title>
+    <script type="module" crossorigin src="/IU7-CG/lab_01/assets/index-BJpJPiU4.js"></script>
+    <link rel="stylesheet" crossorigin href="/IU7-CG/lab_01/assets/index-B-lVBBoJ.css">
+  </head>
+  <body>
+    <div class="main">
+      <div class="inputs">
+        <div class="verbal">
+          <div class="row">
+            <input
+              type="button"
+              value="Рассчитать"
+              id="submit"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Задать окружность</div>
+          <div class="row">
+            <input
+              type="text"
+              class="texinput"
+              placeholder="x центра"
+              id="ixcenter"
+            />
+            <input
+              type="text"
+              class="texinput"
+              placeholder="y центра"
+              id="iycenter"
+            />
+            <input
+              type="text"
+              class="texinput"
+              placeholder="радиус"
+              id="iradius"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div>Добавить точку</div>
+          <div class="row">
+            <input class="button" type="button" value="i" disabled />
+            <input
+              type="text"
+              class="texinput"
+              name="x"
+              id="inewx"
+              placeholder="значение x"
+            />
+            <input
+              type="text"
+              class="texinput"
+              name="y"
+              id="inewy"
+              placeholder="значение y"
+            />
+            <input type="button" class="button" value="+" id="padd" />
+          </div>
+        </div>
+        <div class="points"></div>
+        <div class="verbal bottom" style="margin-top: auto">
+          <div class="row">
+            <input
+              type="button"
+              value="Удалить все точки"
+              id="clearall"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <div class="verbal bottom">
+          УСЛОВИЕ<br />
+          Дано: Множество точек на плоскости, Окружность (координаты центра и
+          радиус) <br />
+          Найти: Все такие треугольники с вершинами в точках из множества, для
+          которых прямая, проходящая через две вершины треугольника проходит и
+          через центр окружности <br />
+          Среди найденных треугольников выбрать тот, у которого искомая сторона
+          образует минимальный угол с осью абсцисс
+        </div>
+      </div>
+      <div class="container">
+        <canvas></canvas>
+      </div>
+    </div>
+    <div class="footer">
+      <input
+        type="button"
+        value="очистить"
+        id="clearout"
+        class="button clearout"
+      />
+      <input
+        type="button"
+        value="смена темы"
+        id="themechange"
+        class="button themechange"
+      />
+      <div class="footertext"></div>
+    </div>
+  </body>
+</html>

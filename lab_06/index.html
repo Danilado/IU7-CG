@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ЛР6</title>
+    <script type="module" crossorigin src="/IU7-CG/lab_06/assets/index-DazBFDr0.js"></script>
+    <link rel="stylesheet" crossorigin href="/IU7-CG/lab_06/assets/index-B-4qngx5.css">
+  </head>
+  <body>
+    <div class="main">
+      <div class="blocker">
+        <div class="blockertext"></div>
+      </div>
+      <div class="inputs">
+        <!--color - TODO-->
+        <div class="verbal">
+          <label for="i-color">Выбор цвета закраски</label>
+          <div class="row">
+            <input
+              type="color"
+              class="texinput"
+              placeholder="Цвет"
+              id="i-color"
+            />
+          </div>
+        </div>
+        <!--points - TODO-->
+        <div class="verbal high">
+          <div>Фигуры</div>
+          <div class="row high" id="figures"></div>
+        </div>
+        <div class="verbal">
+          <div class="row">
+            <input
+              type="button"
+              value="Добавить ломаную"
+              class="widebutton"
+              id="add_line"
+            />
+          </div>
+        </div>
+        <div class="verbal">
+          <div class="row">
+            <input
+              type="button"
+              value="Добавить окружность"
+              class="widebutton"
+              id="add_circle"
+            />
+          </div>
+        </div>
+        <!--fill - TODO-->
+        <div class="verbal">
+          <div>Закраска</div>
+          <div class="row">
+            <input
+              type="text"
+              value=""
+              class="texinput"
+              placeholder="x затравки"
+              id="fillx"
+            />
+            <input
+              type="text"
+              value=""
+              class="texinput"
+              placeholder="y затравки"
+              id="filly"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="text"
+              value=""
+              class="texinput"
+              placeholder="Задержка"
+              id="delay"
+            />
+          </div>
+          <div class="row">
+            <input type="button" value="Залить" class="widebutton" id="fill" />
+          </div>
+        </div>
+        <!--clear - TODO-->
+        <div class="verbal">
+          <div>Очистка холста</div>
+          <div class="row">
+            <input
+              type="button"
+              value="Очистить"
+              id="clear"
+              class="widebutton"
+            />
+          </div>
+        </div>
+
+        <div class="verbal noflex" style="border: none">
+          Размеры холста:
+          <span class="c-width">N/A</span>
+          x
+          <span class="c-height">N/A</span>
+        </div>
+      </div>
+      <div class="col">
+        <div class="container">
+          <canvas id="main_canvas"> </canvas>
+          <canvas id="outline_canvas"> </canvas>
+        </div>
+        <div class="footer">
+          <div class="footertext"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

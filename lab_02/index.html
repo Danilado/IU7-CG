@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ЛР2</title>
+    <script type="module" crossorigin src="/IU7-CG/lab_02/assets/index-BATAo38v.js"></script>
+    <link rel="stylesheet" crossorigin href="/IU7-CG/lab_02/assets/index-B-lVBBoJ.css">
+  </head>
+  <body>
+    <div class="main">
+      <div class="inputs">
+        <!--origin-->
+        <div class="verbal">
+          <div>Координаты центра трансформации</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="origin-x"
+              class="texinput"
+              placeholder="x точки центра трансформации"
+            />
+            <input
+              type="text"
+              name=""
+              id="origin-y"
+              class="texinput"
+              placeholder="y точки центра трансформации"
+            />
+          </div>
+        </div>
+        <!--rotate-->
+        <div class="verbal">
+          <div>Трансформация - поворот</div>
+          <div class="row">
+            <input
+              type="text"
+              class="texinput"
+              placeholder="угол в градусах"
+              id="i-angle"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="применить"
+              class="widebutton"
+              id="add_rotation"
+            />
+          </div>
+        </div>
+        <!--scale-->
+        <div class="verbal">
+          <div>Трансформация - масштабирование</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="kx"
+              placeholder="kx"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="ky"
+              placeholder="ky"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="применить"
+              class="widebutton"
+              id="add_scale"
+            />
+          </div>
+        </div>
+        <!--shift-->
+        <div class="verbal">
+          <div>Трансформация - смещение</div>
+          <div class="row">
+            <input
+              type="text"
+              name=""
+              id="dx"
+              placeholder="dx"
+              class="texinput"
+            />
+            <input
+              type="text"
+              name=""
+              id="dy"
+              placeholder="dy"
+              class="texinput"
+            />
+          </div>
+          <div class="row">
+            <input
+              type="button"
+              value="применить"
+              class="widebutton"
+              id="add_translation"
+            />
+          </div>
+        </div>
+        <div class="transformations"></div>
+        <div class="verbal bottom" style="margin-top: auto">
+          <div class="row">
+            <input
+              type="button"
+              value="Удалить все трансформации"
+              id="clearall"
+              class="widebutton"
+            />
+          </div>
+        </div>
+        <div class="verbal bottom">
+          Пределы холста:<br />
+          x: [-800, 800]<br />
+          y: [-400, 400]
+        </div>
+      </div>
+      <div class="container">
+        <canvas id="dynamicPlane" style="z-index: 10"></canvas>
+        <canvas id="staticPlane"></canvas>
+      </div>
+    </div>
+    <div class="footer">
+      <input
+        type="button"
+        value="очистить"
+        id="clearout"
+        class="button clearout"
+      />
+      <input
+        type="button"
+        value="смена темы"
+        id="themechange"
+        class="button themechange"
+      />
+      <div class="footertext"></div>
+    </div>
+  </body>
+</html>
